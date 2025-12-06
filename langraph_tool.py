@@ -1511,23 +1511,33 @@ async def router_node(state: GraphState) -> Dict[str, Any]:
     # ============================================================
     intent_match = IntentClassifier.match_intent(text)
     if intent_match:
-        intent_response = IntentClassifier.get_intent_response(intent_match)
-        logging.info(f"🎯 Router: Intent match found - {intent_match.get('tag') or intent_match.get('intent')} ({intent_match.get('match_type')})")
+        # Skip greeting intents if conversation already started (has history)
+        is_greeting = intent_match.get('tag') == 'greeting'
+        has_history = len(history) > 0 or len(tool_history) > 0
         
-        # Return intent response directly (bypass normal routing)
-        return {
-            "emotion": "neutral",
-            "selected_tool": "intent_classifier",  # Special marker
-            "tool_input": text,
-            "tool_history": tool_history + ["intent_classifier"],
-            "final_output": intent_response,  # Set response directly
-            "debug_info": {
+        if is_greeting and has_history:
+            # User said "hi" mid-conversation - treat as casual interjection, not new greeting
+            logging.info(f"🎯 Router: Greeting detected but conversation active - using normal routing")
+            # Continue to normal routing below
+        else:
+            # Use intent response (for new greetings, thanks, goodbye, etc.)
+            intent_response = IntentClassifier.get_intent_response(intent_match)
+            logging.info(f"🎯 Router: Intent match found - {intent_match.get('tag') or intent_match.get('intent')} ({intent_match.get('match_type')})")
+            
+            # Return intent response directly (bypass normal routing)
+            return {
                 "emotion": "neutral",
-                "tool": "intent_classifier",
-                "intent_match": intent_match,
-                "previous_tool": tool_history[-1] if tool_history else None
+                "selected_tool": "intent_classifier",  # Special marker
+                "tool_input": text,
+                "tool_history": tool_history + ["intent_classifier"],
+                "final_output": intent_response,  # Set response directly
+                "debug_info": {
+                    "emotion": "neutral",
+                    "tool": "intent_classifier",
+                    "intent_match": intent_match,
+                    "previous_tool": tool_history[-1] if tool_history else None
+                }
             }
-        }
     
     # ============================================================
     # PRIORITY 2: NORMAL EMOTION DETECTION & ROUTING
