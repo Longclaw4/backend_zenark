@@ -1873,6 +1873,11 @@ class ReportRequest(BaseModel):
     token: str
     session_id: Optional[str] = None
 
+class ScoreRequest(BaseModel):
+    """Request model for score_conversation endpoint"""
+    session_id: str  # Required
+    token: str  # Required
+
 
 def sanitize(obj: Any) -> Any:
     """Recursively convert ObjectId -> str and sanitize nested containers."""
@@ -2022,18 +2027,13 @@ async def save_chat_endpoint(req: SaveRequest):
 
 
 @app.post("/score_conversation")
-async def score_conversation(request: Request):
+async def score_conversation(req: ScoreRequest):
     """
     Analyze an entire conversation history and return a Global Distress Score (1–10)
     following the action_scoring_guidelines.
     """
-    data = await request.json()
-    session_id = data.get("session_id")
-    token= data.get("token")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Missing session_id")
-    if not token:
-        raise HTTPException(status_code=400, detail="Missing token")
+    session_id = req.session_id
+    token = req.token
     # Ensure MongoDB is initialized
     if chats_col is None:
         raise HTTPException(status_code=500, detail="MongoDB not initialized")
