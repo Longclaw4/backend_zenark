@@ -2143,10 +2143,10 @@ async def generate_report_endpoint(req: ReportRequest):
         try:
             user_id_obj = ObjectId(user_id)
         except Exception as e:
-            # If ID is not a valid ObjectId, create a dummy one for testing
-            # In production, you'd want to validate this properly
-            logging.warning(f"Invalid ObjectId '{user_id}', using test ID")
-            user_id_obj = ObjectId("6753a1b3f4e5d6c7a8b9c0d1")  # Test ObjectId
+            # If ID is not a valid ObjectId, use the string as-is
+            # This matches what AsyncMongoChatMemory does when saving
+            logging.warning(f"Invalid ObjectId '{user_id}', using string format")
+            user_id_obj = user_id  # Use string format
         
         score = await score_conversation_local({"token":req.token})
         print(score)
