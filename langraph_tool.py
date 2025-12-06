@@ -1699,8 +1699,12 @@ async def generate_report( user_id,score) -> Dict[str, Any]:
     if chats_col is None or reports_col is None:
         return {"error": "Database not initialized"}
     try:
+        # Try to find by ObjectId first, then by string
         record = await chats_col.find_one(
-            {"userId": user_id},
+            {"$or": [
+                {"userId": user_id},  # ObjectId format
+                {"userId": str(user_id)}  # String format (for test tokens)
+            ]},
             sort=[("timestamp", -1)] 
         )
         if not record:
