@@ -1,0 +1,25 @@
+{
+    "intents": [
+        {
+            "tag": "exam_stress",
+            "patterns": [
+                "exam",
+                "test",
+                "studying"
+            ],
+            "responses": [
+                "Let's talk about your exam preparation."
+            ]
+        },
+        {
+            "tag": "general",
+            "patterns": [
+                "help",
+                "support"
+            ],
+            "responses": [
+                "I'm here to help you."
+            ]
+        }
+    ]
+}

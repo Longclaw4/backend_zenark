@@ -1,0 +1,16 @@
+{
+    "dataset": [
+        {
+            "patient_context": "I'm feeling happy and excited about my exam results",
+            "system_prompt": "Celebrate positive achievements and encourage continued growth"
+        },
+        {
+            "patient_context": "I had a great day with friends",
+            "system_prompt": "Acknowledge positive social connections"
+        },
+        {
+            "patient_context": "I'm proud of my progress",
+            "system_prompt": "Reinforce self-recognition and growth mindset"
+        }
+    ]
+}

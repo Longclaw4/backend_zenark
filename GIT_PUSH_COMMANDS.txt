@@ -1,0 +1,13 @@
+# After creating your GitHub repository, run these commands:
+
+# 1. Add your repository as remote (REPLACE WITH YOUR ACTUAL REPO URL)
+git remote add origin https://github.com/YOUR_USERNAME/zenark-backend.git
+
+# 2. Rename branch to main
+git branch -M main
+
+# 3. Push to GitHub
+git push -u origin main
+
+# That's it! Your code is now on GitHub.
+# Next: Deploy on Render using this repository.

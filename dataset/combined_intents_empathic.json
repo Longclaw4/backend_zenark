@@ -1,0 +1,26 @@
+{
+    "intents": [
+        {
+            "tag": "greeting",
+            "patterns": [
+                "hi",
+                "hello",
+                "hey"
+            ],
+            "responses": [
+                "Hello! How can I help you today?"
+            ]
+        },
+        {
+            "tag": "anxiety",
+            "patterns": [
+                "anxious",
+                "worried",
+                "nervous"
+            ],
+            "responses": [
+                "I understand you're feeling anxious. Let's talk about it."
+            ]
+        }
+    ]
+}

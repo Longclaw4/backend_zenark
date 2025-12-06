@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+gunicorn
+motor
+langgraph
+langchain-openai
+langchain-core
+langchain-community
+transformers
+aiocache
+numpy
+python-dotenv
+pydantic
+pymongo

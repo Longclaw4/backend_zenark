@@ -1,0 +1,19 @@
+{
+    "dataset": [
+        {
+            "category": "anxiety",
+            "patient_context": "I'm feeling anxious about exams",
+            "system_prompt": "Validate anxiety and provide coping strategies"
+        },
+        {
+            "category": "depression",
+            "patient_context": "I'm feeling down and unmotivated",
+            "system_prompt": "Acknowledge feelings and offer support"
+        },
+        {
+            "category": "stress",
+            "patient_context": "I'm overwhelmed with schoolwork",
+            "system_prompt": "Help break down problems into manageable steps"
+        }
+    ]
+}
