@@ -28,7 +28,6 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
-from transformers import pipeline
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any, cast
 import json
@@ -350,43 +349,48 @@ class GraphState(TypedDict):
     history_snippets: List[str]
 
 # ===================================================
-# EMOTION DETECTION
+# EMOTION DETECTION (Lightweight keyword-based for free tier)
 # ===================================================
 
 class EmotionDetector:
-    """Singleton emotion classifier"""
+    """Lightweight keyword-based emotion classifier (no ML required)"""
     _instance: Optional["EmotionDetector"] = None
-    classifier: Any = None
+    
+    # Emotion keywords
+    POSITIVE_KEYWORDS = {
+        'happy', 'joy', 'excited', 'great', 'good', 'amazing', 'wonderful', 
+        'fantastic', 'excellent', 'love', 'proud', 'grateful', 'thankful',
+        'blessed', 'awesome', 'perfect', 'best', 'better', 'improved'
+    }
+    
+    NEGATIVE_KEYWORDS = {
+        'sad', 'angry', 'depressed', 'anxious', 'worried', 'scared', 'fear',
+        'hate', 'terrible', 'awful', 'bad', 'worst', 'horrible', 'stressed',
+        'overwhelmed', 'frustrated', 'upset', 'hurt', 'pain', 'crying', 'lonely',
+        'hopeless', 'worthless', 'failure', 'struggling', 'difficult', 'hard'
+    }
     
     def __new__(cls):
         if not cls._instance:
             cls._instance = super().__new__(cls)
-            cls._instance.classifier = pipeline(
-                "text-classification",
-                model="j-hartmann/emotion-english-distilroberta-base",
-                token=CONFIG.hf_token,
-                top_k=None,
-            )
+            logging.info("✅ Lightweight emotion detector initialized")
         return cls._instance
     
     def detect(self, text: str) -> str:
-        """Detect and map to routing categories"""
+        """Detect emotion using keyword matching"""
         try:
-            preds = self.classifier(text[:512])  # Truncate for safety
-            if isinstance(preds[0], list):
-                preds = preds[0]
+            text_lower = text.lower()
+            words = set(text_lower.split())
             
-            best = max(preds, key=lambda x: x.get("score", 0))
-            label = best.get("label", "").lower()
+            positive_count = len(words & self.POSITIVE_KEYWORDS)
+            negative_count = len(words & self.NEGATIVE_KEYWORDS)
             
-            emotion_map = {
-                "joy": "positive",
-                "anger": "negative",
-                "fear": "negative",
-                "sadness": "negative",
-                "disgust": "negative"
-            }
-            return emotion_map.get(label, "neutral")
+            if positive_count > negative_count:
+                return "positive"
+            elif negative_count > positive_count:
+                return "negative"
+            else:
+                return "neutral"
         except Exception as e:
             logging.error(f"Emotion detection failed: {e}")
             return "neutral"
