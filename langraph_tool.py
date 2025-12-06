@@ -2148,7 +2148,47 @@ async def generate_report_endpoint(req: ReportRequest):
             logging.warning(f"Invalid ObjectId '{user_id}', using string format")
             user_id_obj = user_id  # Use string format
         
-        score = await score_conversation_local({"token":req.token})
+        # Calculate score - find the most recent session for this user
+        latest_chat = await chats_col.find_one(
+            {"$or": [
+                {"userId": user_id_obj},
+                {"userId": str(user_id_obj)}
+            ]},
+            sort=[("timestamp", -1)]
+        )
+        
+        if latest_chat and latest_chat.get("session_id"):
+            # Load session and calculate score
+            session_id = latest_chat["session_id"]
+            memory = AsyncMongoChatMemory(session_id, chats_col)
+            await memory._load_existing()
+            history = memory.get_history()
+            
+            if history.messages:
+                # Calculate score using AI
+                conversation_summary = "\n".join(
+                    [f"{'USER' if isinstance(msg, HumanMessage) else 'ZENARK'}: {msg.content}" for msg in history.messages]
+                )
+                scoring_prompt = f"""{action_scoring_guidelines}
+
+Conversation SUMMARY:
+{conversation_summary[:4000]}
+
+Return only a single integer (1–10) as the Global Distress Score."""
+                
+                llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=get_api_key())
+                result = await llm.ainvoke([HumanMessage(content=scoring_prompt)])
+                
+                # Extract score
+                import re
+                content = result.content if hasattr(result, 'content') else str(result)
+                score_match = re.search(r'\b(\d{1,2})\b', str(content))
+                score = int(score_match.group(1)) if score_match and 1 <= int(score_match.group(1)) <= 10 else 5
+            else:
+                score = 1  # Default for empty conversation
+        else:
+            score = 1  # Default if no session found
+        
         print(score)
         report_data = await generate_report(user_id_obj,score)
 
@@ -2157,7 +2197,7 @@ async def generate_report_endpoint(req: ReportRequest):
 
         # SUCCESS: Wrap report and sanitize (ObjectId → string, datetime → ISO)
       
-        rep=merge_therapist_and_analyst({"report": report_data})
+        rep=merge_therapist_and_analyst(report_data)
         return sanitize(rep)
 
     except Exception as e:
