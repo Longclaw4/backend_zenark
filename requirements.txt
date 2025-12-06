@@ -7,6 +7,8 @@ langchain-openai
 langchain-core
 langchain-community
 transformers
+torch
+sentencepiece
 aiocache
 numpy
 python-dotenv
