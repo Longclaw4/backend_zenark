@@ -1026,6 +1026,7 @@ class IntentClassifier:
     @staticmethod
     def match_intent(user_text: str) -> Optional[Dict[str, Any]]:
         """Match user input against predefined intent patterns"""
+        import re
         normalized_text = IntentClassifier.normalize_text(user_text)
         
         # Priority 1: Check empathic intents (mental health focused)
@@ -1052,7 +1053,7 @@ class IntentClassifier:
                         'match_type': 'exact'
                     }
         
-        # Priority 3: Partial matching for common greetings/thanks
+        # Priority 3: Partial matching for common greetings/thanks (WHOLE WORDS ONLY)
         common_intents = {
             'greeting': ['hi', 'hello', 'hey', 'hola', 'namaste', 'vanakkam'],
             'thanks': ['thanks', 'thank you', 'thx', 'appreciate'],
@@ -1060,16 +1061,21 @@ class IntentClassifier:
         }
         
         for intent_tag, keywords in common_intents.items():
-            if any(keyword in normalized_text for keyword in keywords):
-                # Find matching intent from empathic dataset
-                for intent_obj in INTENT_DATA_EMPATHIC:
-                    if intent_obj.get('tag') == intent_tag:
-                        return {
-                            'dataset': 'empathic',
-                            'tag': intent_tag,
-                            'responses': intent_obj.get('responses', []),
-                            'match_type': 'partial'
-                        }
+            # Use word boundaries to match whole words only
+            for keyword in keywords:
+                # Match whole word with word boundaries
+                pattern = r'\b' + re.escape(keyword) + r'\b'
+                if re.search(pattern, normalized_text):
+                    # Find matching intent from empathic dataset
+                    for intent_obj in INTENT_DATA_EMPATHIC:
+                        if intent_obj.get('tag') == intent_tag:
+                            return {
+                                'dataset': 'empathic',
+                                'tag': intent_tag,
+                                'responses': intent_obj.get('responses', []),
+                                'match_type': 'partial'
+                            }
+                    break  # Stop after first keyword match
         
         return None
     
