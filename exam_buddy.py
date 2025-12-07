@@ -1,140 +1,158 @@
-# AI-Powered Exam Buddy
-# Provides intelligent study guidance using OpenAI
+"""
+Exam Buddy Module
+Provides specialized study coaching for Indian competitive exams (JEE, NEET, etc.)
+"""
 
-import os
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import StrOutputParser
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from api_key_rotator import get_api_key
+import logging
 
-# Exam-specific knowledge base
-EXAM_STRATEGIES = {
-    "JEE": {
-        "subjects": ["Physics", "Chemistry", "Mathematics"],
-        "tips": [
-            "Master NCERT thoroughly before moving to advanced books",
-            "Practice 3+ years of previous papers",
-            "Focus on conceptual clarity over memorization",
-            "Daily problem-solving: 2-3 hours minimum",
-            "Weak topics first, then strengthen strong areas"
-        ],
-        "resources": "NCERT, HC Verma (Physics), OP Tandon (Chemistry), RD Sharma (Math)"
-    },
-    "NEET": {
-        "subjects": ["Physics", "Chemistry", "Biology"],
-        "tips": [
-            "Biology = NCERT line-by-line (most important)",
-            "Physics: 300+ numerical practice mandatory",
-            "Chemistry: Daily organic reactions revision",
-            "Weekly mock tests are non-negotiable",
-            "Error log book for every wrong answer"
-        ],
-        "resources": "NCERT (Biology), DC Pandey (Physics), MS Chauhan (Chemistry)"
-    },
-    "CUET": {
-        "subjects": ["Domain subjects", "General Test", "Language"],
-        "tips": [
-            "Domain subjects = NCERT deep-dive",
-            "General test = 1 year current affairs coverage",
-            "Language section: 30 min daily reading practice",
-            "University-specific syllabus check mandatory",
-            "Time management: 60 min per section practice"
-        ],
-        "resources": "NCERT, Current Affairs compilations, Previous year papers"
-    },
-    "GATE": {
-        "subjects": ["Engineering Core", "Aptitude", "Mathematics"],
-        "tips": [
-            "Standard textbooks > coaching notes",
-            "Previous 15 years papers analysis essential",
-            "Virtual calculator practice (2 weeks before exam)",
-            "Revision: 3 cycles minimum",
-            "Weak subjects: 60% time allocation"
-        ],
-        "resources": "Standard textbooks, GATE previous papers, NPTEL lectures"
-    }
-}
+logger = logging.getLogger("zenark.exam_buddy")
 
-STUDY_TECHNIQUES = {
-    "time_management": "Use Pomodoro: 25 min focused study + 5 min break. Track daily hours.",
-    "active_recall": "Close book, write what you remember. Test yourself before reviewing.",
-    "spaced_repetition": "Review after 1 day, 3 days, 7 days, 14 days for long-term retention.",
-    "feynman": "Explain concepts in simple terms as if teaching a 12-year-old.",
-    "practice_testing": "70% practice problems, 30% reading. Testing > passive reading.",
-    "interleaving": "Mix different subjects/topics in one session for better retention.",
-    "mind_mapping": "Create visual connections between topics for better recall."
-}
+# System prompt for exam buddy
+EXAM_BUDDY_SYSTEM_PROMPT = """You are a friendly and knowledgeable study coach specialized in helping Indian teenage students prepare for competitive exams like JEE Main, NEET, IIT, NIT, etc.
 
-async def get_exam_buddy_response(question: str, session_id: str = "", context: str = "") -> str:
+Your expertise includes:
+- Effective study techniques and time management
+- Memory enhancement tricks for formulas, equations, and periodic tables
+- Subject-specific strategies for Chemistry, Mathematics, Physics, and Biology
+- Exam preparation psychology and stress management
+- Indian education system specific advice
+
+Always be:
+- Encouraging and supportive
+- Practical with actionable advice
+- Culturally aware of Indian student challenges
+- Focused on proven study methods
+
+Current user context: {context}
+
+Important: Tailor your advice to competitive exam preparation and provide specific, implementable tips."""
+
+# In-memory session storage (for production, use MongoDB)
+_session_store = {}
+
+
+def get_session_history(session_id: str) -> ChatMessageHistory:
     """
-    Generate intelligent exam-focused responses using AI.
+    Retrieve or create chat history for a session.
     
     Args:
-        question: Student's question/message
-        session_id: Session identifier
-        context: Additional context for the question
+        session_id: Unique session identifier
+        
+    Returns:
+        ChatMessageHistory object for the session
+    """
+    if session_id not in _session_store:
+        _session_store[session_id] = ChatMessageHistory()
+    return _session_store[session_id]
+
+
+def create_exam_buddy_chain():
+    """
+    Create the exam buddy conversational chain with memory.
     
     Returns:
-        str: AI-generated study guidance
+        RunnableWithMessageHistory chain
+    """
+    # Initialize LLM with API key rotation
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, openai_api_key=get_api_key())
+    
+    # Create prompt template with history
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", EXAM_BUDDY_SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="history"),
+        ("user", "{question}")
+    ])
+    
+    # Create chain
+    output_parser = StrOutputParser()
+    chain = prompt | llm | output_parser
+    
+    # Wrap with message history
+    conversational_chain = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="question",
+        history_messages_key="history"
+    )
+    
+    return conversational_chain
+
+
+# Global chain instance
+_exam_buddy_chain = None
+
+
+def get_exam_buddy_chain():
+    """Get or create the global exam buddy chain instance."""
+    global _exam_buddy_chain
+    if _exam_buddy_chain is None:
+        _exam_buddy_chain = create_exam_buddy_chain()
+    return _exam_buddy_chain
+
+
+async def get_exam_buddy_response(
+    question: str,
+    session_id: str = "default",
+    context: str = ""
+) -> str:
+    """
+    Get a response from the exam buddy.
+    
+    Args:
+        question: User's question about exam preparation
+        session_id: Session identifier for conversation history
+        context: Additional context about the user
+        
+    Returns:
+        Exam buddy's response as a string
     """
     try:
-        # Get API key from environment
-        api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            return "I'm having trouble connecting to my knowledge base. Please try again later."
+        chain = get_exam_buddy_chain()
         
-        # Detect exam type from question
-        question_lower = question.lower()
-        detected_exam = None
-        exam_context = ""
-        
-        for exam_name, exam_data in EXAM_STRATEGIES.items():
-            if exam_name.lower() in question_lower:
-                detected_exam = exam_name
-                exam_context = f"\n\nExam: {exam_name}\nKey subjects: {', '.join(exam_data['subjects'])}\nTop strategies: {'; '.join(exam_data['tips'][:3])}\nRecommended resources: {exam_data['resources']}"
-                break
-        
-        # Build system prompt
-        system_prompt = f"""You are an expert Study Buddy AI specializing in exam preparation and academic success.
-
-Your role:
-- Provide specific, actionable study advice
-- Be encouraging but realistic
-- Focus on proven study techniques
-- Give concrete examples and strategies
-- Keep responses concise (3-4 sentences max)
-
-Study Techniques Available:
-{chr(10).join([f"- {k}: {v}" for k, v in STUDY_TECHNIQUES.items()])}
-{exam_context}
-
-Guidelines:
-1. If student asks about a specific exam, use the exam-specific strategies
-2. If asking about study methods, recommend proven techniques
-3. If asking about time management, give specific schedules
-4. If asking about stress, acknowledge it and provide coping strategies
-5. Always end with ONE actionable next step
-
-Context: {context if context else 'General study guidance'}
-
-Keep responses under 100 words. Be specific, not generic."""
-
-        # Create LLM instance
-        llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.7,
-            openai_api_key=api_key
+        response = await chain.ainvoke(
+            {
+                "question": question,
+                "context": context
+            },
+            config={
+                "configurable": {"session_id": session_id}
+            }
         )
         
-        # Generate response
-        response = await llm.ainvoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=question)
-        ])
-        
-        # Extract response text
-        response_text = response.content if isinstance(response.content, str) else str(response.content)
-        
-        return response_text.strip()
+        logger.info(f"Exam buddy response generated for session {session_id}")
+        return response
         
     except Exception as e:
-        # Fallback response on error
-        return f"I understand you're asking about: '{question}'. Let me help you with that. Could you provide more details about what specific aspect you need help with?"
+        logger.error(f"Error generating exam buddy response: {e}")
+        return (
+            "I'm having trouble right now, but I'm here to help! "
+            "Could you rephrase your question about exam preparation?"
+        )
+
+
+def clear_session_history(session_id: str):
+    """
+    Clear the conversation history for a specific session.
+    
+    Args:
+        session_id: Session identifier to clear
+    """
+    if session_id in _session_store:
+        del _session_store[session_id]
+        logger.info(f"Cleared session history for {session_id}")
+
+
+def get_all_sessions():
+    """
+    Get list of all active session IDs.
+    
+    Returns:
+        List of session IDs
+    """
+    return list(_session_store.keys())
