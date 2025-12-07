@@ -2436,8 +2436,12 @@ def merge_therapist_and_analyst(data: dict) -> dict:
     therapist = None
     analyst = None
 
-    # Identify agents
+    # Identify agents - with type checking
     for item in report_items:
+        # Skip if item is not a dict
+        if not isinstance(item, dict):
+            continue
+            
         if item.get("name") == "TherapistAgent":
             therapist = item
         elif item.get("name") == "DataAnalystAgent":
