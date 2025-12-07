@@ -11,3 +11,5 @@ numpy
 python-dotenv
 pydantic
 pymongo
+pyautogen
+transformers
