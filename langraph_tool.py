@@ -857,23 +857,29 @@ Do not add decoration, emojis, motivation, or filler.
     # general study strategies prompt
     top_methods = ", ".join(STUDY_TECHNIQUES[:4])
     
-    # Check if user is responding to previous question
+    # Check if user is responding to previous question or asking for help
     user_mentioned_technique = any(technique.lower() in t for technique in STUDY_TECHNIQUES)
     already_asked_structure = any("study structure" in snippet.lower() for snippet in history_snippets[-3:])
     
-    # If user mentioned a technique or answered the structure question
-    if user_mentioned_technique or (already_asked_structure and len(history_snippets) > 2):
+    # Detect if user is asking a follow-up question
+    is_asking_question = any(word in t for word in ["what should", "how do", "how can", "what can", "help me", "suggest", "advice"])
+    is_short_response = len(text.split()) <= 5  # "no", "i don't know", etc.
+    
+    # If user is asking for help OR already saw the techniques
+    if is_asking_question or user_mentioned_technique or (already_asked_structure and is_short_response):
         prompt = f"""
 You are an exam-performance assistant.{history_context}
 
-The student mentioned: "{text}"
+The student said: "{text}"
 
-Based on their response, provide:
-- Specific advice on how to optimize their current study method
-- One concrete improvement they can make TODAY
-- A follow-up question about their biggest study challenge (NOT about study structure again)
+They need DIRECT, ACTIONABLE advice. Provide:
+1. One specific study technique to start TODAY (pick the most relevant from: {top_methods})
+2. Exactly HOW to implement it (step-by-step, 2-3 sentences)
+3. One immediate action they can take in the next hour
 
-Keep it practical and actionable. No decoration or filler.
+Then ask: "Which subject are you finding hardest right now?"
+
+Be practical and specific. No lists, no theory.
 """
     else:
         # First time asking about study methods
@@ -1859,20 +1865,24 @@ async def generate_response(user_text: str, session_id: str, student_id: str = "
 
     return output
 
-async def generate_report( user_id,score) -> Dict[str, Any]:
+async def generate_report(user_id, session_id, score) -> Dict[str, Any]:
     if chats_col is None or reports_col is None:
         return {"error": "Database not initialized"}
     try:
-        # Try to find by ObjectId first, then by string
+        # Query by BOTH userId AND session_id to get the correct conversation
         record = await chats_col.find_one(
-            {"$or": [
-                {"userId": user_id},  # ObjectId format
-                {"userId": str(user_id)}  # String format (for test tokens)
-            ]},
-            sort=[("timestamp", -1)] 
+            {
+                "$and": [
+                    {"$or": [
+                        {"userId": user_id},  # ObjectId format
+                        {"userId": str(user_id)}  # String format (for test tokens)
+                    ]},
+                    {"session_id": session_id}  # CRITICAL: Filter by current session
+                ]
+            }
         )
         if not record:
-            return {"error": f"No conversation found for user "}
+            return {"error": f"No conversation found for user in this session"}
 
         # SUCCESS — generate report
         conv_text = "\n".join(
@@ -2355,7 +2365,7 @@ Return only a single integer (1–10) as the Global Distress Score."""
             score = 1  # Default if no session found
         
         print(score)
-        report_data = await generate_report(user_id_obj,score)
+        report_data = await generate_report(user_id_obj, session_id, score)
 
         if isinstance(report_data, dict) and "error" in report_data:
             return JSONResponse(status_code=404, content=report_data)
@@ -2447,59 +2457,11 @@ Return only a single integer (1–10) as the Global Distress Score."""
 import re
 def merge_therapist_and_analyst(data: dict) -> dict:
     """
-    Merge TherapistAgent content with cleaned DataAnalystAgent content.
-    Removes JSON block and the 'Strengths & Weaknesses JSON and Dashboard Summary' section heading.
-    DataAnalystAgent remains unchanged.
+    Keep TherapistAgent and DataAnalystAgent content separate.
+    No merging needed for concise report format.
     """
-    # Handle both possible structures:
-    # 1. {"report": {"report": [...]}} (old structure)
-    # 2. {"report": [...]} (new structure from autogen_report.py)
-    
-    report_field = data.get("report", [])
-    
-    # If report_field is a dict with nested "report", extract it
-    if isinstance(report_field, dict):
-        report_items = report_field.get("report", [])
-    # If report_field is already a list, use it directly
-    elif isinstance(report_field, list):
-        report_items = report_field
-    else:
-        # Fallback: empty list
-        report_items = []
-
-    therapist = None
-    analyst = None
-
-    # Identify agents - with type checking
-    for item in report_items:
-        # Skip if item is not a dict
-        if not isinstance(item, dict):
-            continue
-            
-        if item.get("name") == "TherapistAgent":
-            therapist = item
-        elif item.get("name") == "DataAnalystAgent":
-            analyst = item
-
-    if therapist and analyst:
-        analyst_content = analyst.get("content", "")
-
-        # Remove JSON block between ```json ... ```
-        cleaned_analyst = re.sub(r"```json.*?```", "", analyst_content, flags=re.DOTALL)
-
-        # Remove heading line containing "Strengths & Weaknesses JSON and Dashboard Summary" (case-insensitive)
-        cleaned_analyst = re.sub(
-            r".*Strengths\s*&\s*Weaknesses.*Dashboard\s*Summary.*\n?",
-            "",
-            cleaned_analyst,
-            flags=re.IGNORECASE
-        )
-
-        cleaned_analyst = cleaned_analyst.strip()
-
-        # Merge into TherapistAgent content
-        therapist["content"] = therapist.get("content", "").rstrip() + "\n\n" + cleaned_analyst
-
+    # Just return data as-is - no merging
+    # Each agent's content is already concise and standalone
     return data
 
 

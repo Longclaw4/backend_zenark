@@ -53,6 +53,19 @@ Conversation:
 5. If the user talked about "sleep", DO NOT add "anxiety" unless they mentioned it
 6. STICK TO THEIR EXACT WORDS AND TOPICS
 
+EXAMPLES OF WHAT NOT TO DO:
+❌ WRONG: "You're worried about your mother's reaction to your exam results"
+   (If they never mentioned mother)
+✅ CORRECT: "You're worried about your exam results"
+
+❌ WRONG: "Your family pressure is causing stress"
+   (If they never mentioned family)
+✅ CORRECT: "Your exam stress is affecting your sleep"
+
+❌ WRONG: "You're concerned about disappointing your parents"
+   (If they only mentioned girlfriend)
+✅ CORRECT: "You're concerned about your girlfriend's feelings"
+
 Generate a CONCISE "Personal Wellness Guide":
 
 1. *Emotional Validation* (4-5 sentences)
@@ -60,6 +73,7 @@ Generate a CONCISE "Personal Wellness Guide":
    - Use natural, warm language (not clinical)
    - Validate their experience deeply
    - Show understanding of THEIR SPECIFIC situation (not a generic one)
+   - DO NOT add people, relationships, or concerns they didn't mention
 
 2. *Your Gentle Step Forward* (1 specific action, 1 line)
    - A single, compassionate, low-effort immediate action to solidify progress and maintain momentum
@@ -76,14 +90,16 @@ Generate a CONCISE "Personal Wellness Guide":
    - Should resonate with their ACTUAL situation
 
 FINAL CHECK BEFORE RESPONDING:
-- Did I mention any topic the user did NOT bring up? If yes, REMOVE IT.
+- Did I mention "mother", "father", "parents", or "family" when they didn't? REMOVE IT.
+- Did I mention any topic the user did NOT bring up? REMOVE IT.
 - Am I using their actual words and concerns? If no, REWRITE.
 
 CRITICAL: 
 - Use "you/your" not "the student"
 - Be warm and direct, not clinical
 - ONLY reference topics they ACTUALLY discussed (check twice!)
-- Emotional validation should be 4-5 sentences"""
+- Emotional validation should be 4-5 sentences
+- NO HALLUCINATIONS - stick to their exact topics!"""
 
         analyst_prompt = f"""You are a behavioral data analyst reviewing a student's conversation patterns.
 
@@ -96,6 +112,19 @@ Conversation:
 3. If they talked about "girlfriend", DO NOT mention "mother", "father", or "family"
 4. If they talked about "exams", DO NOT add "parental pressure" unless stated
 5. STICK TO THEIR EXACT WORDS - do not generalize or assume
+
+EXAMPLES OF WHAT NOT TO DO:
+❌ WRONG: "worry about mother discovering something"
+   (If they never mentioned mother)
+✅ CORRECT: "exam-related stress"
+
+❌ WRONG: "anxiety related to parental expectations"
+   (If they never mentioned parents)
+✅ CORRECT: "self-imposed exam pressure"
+
+❌ WRONG: "fear of family reaction"
+   (If they only talked about girlfriend)
+✅ CORRECT: "relationship concerns"
 
 Provide "Key Insights" with this structure:
 
@@ -115,12 +144,14 @@ Provide "Key Insights" with this structure:
 
 *Overall Pattern:* (2-3 sentences)
 [Summary based ONLY on what they ACTUALLY said - use their exact topics]
+DO NOT mention mother, father, parents, or family unless they explicitly discussed them.
 
 *Behavioral Impact:* (1-2 sentences)
 [What user can bring to their behavior based ONLY on the conversation topics]
 
 FINAL CHECK:
-- Did I mention any person, relationship, or issue NOT in the conversation? If yes, REMOVE IT.
+- Did I mention "mother", "father", "parents", or "family" when they didn't? REMOVE IT.
+- Did I mention any person, relationship, or issue NOT in the conversation? REMOVE IT.
 - Am I analyzing their ACTUAL words or making assumptions? Stick to ACTUAL.
 
 CRITICAL: 
@@ -128,7 +159,8 @@ CRITICAL:
 - List 3-5 items for each category
 - Be specific based on ACTUAL conversation (not assumptions)
 - Use "you/your" in Overall Pattern and Behavioral Impact
-- DOUBLE-CHECK: No hallucinated topics!"""
+- DOUBLE-CHECK: No hallucinated topics!
+- NO MENTIONS of people/relationships not discussed!"""
 
         planner_prompt = f"""You are a wellness coach creating a simple daily routine.
 
