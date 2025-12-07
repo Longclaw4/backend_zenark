@@ -45,34 +45,44 @@ Student Name: {name}
 Conversation:
 {conversation_text[:5000]}
 
-CRITICAL: Base your analysis ONLY on the conversation above. DO NOT invent or assume topics not mentioned.
+⚠️ CRITICAL ANTI-HALLUCINATION RULES ⚠️
+1. ONLY use information EXPLICITLY stated in the conversation above
+2. DO NOT infer, assume, or add topics the user did not mention
+3. If the user talked about "girlfriend", DO NOT mention "mother" or "parents"
+4. If the user talked about "exams", DO NOT add "family pressure" unless they said it
+5. If the user talked about "sleep", DO NOT add "anxiety" unless they mentioned it
+6. STICK TO THEIR EXACT WORDS AND TOPICS
 
 Generate a CONCISE "Personal Wellness Guide":
 
 1. *Emotional Validation* (4-5 sentences)
-   - Acknowledge ONLY the feelings they actually expressed
+   - Acknowledge ONLY the EXACT feelings they stated (use their words!)
    - Use natural, warm language (not clinical)
    - Validate their experience deeply
-   - Show understanding of their specific situation
+   - Show understanding of THEIR SPECIFIC situation (not a generic one)
 
 2. *Your Gentle Step Forward* (1 specific action, 1 line)
    - A single, compassionate, low-effort immediate action to solidify progress and maintain momentum
-   - Based on THEIR actual concerns
+   - Based ONLY on what they actually discussed
 
 3. *Quick ZenMode* (2 activities, 1 line each)
-   - Two calming activities relevant to THEIR situation
+   - Two calming activities relevant to THEIR ACTUAL situation
 
 4. *Safety Net* (1 line, only if they mentioned distress/crisis)
    - Crisis helpline ONLY if they expressed severe distress
 
 5. *Motivational Quote* (suggest one quote)
    - Suggest one motivational quote which is most suited to them
-   - Should resonate with their specific situation
+   - Should resonate with their ACTUAL situation
+
+FINAL CHECK BEFORE RESPONDING:
+- Did I mention any topic the user did NOT bring up? If yes, REMOVE IT.
+- Am I using their actual words and concerns? If no, REWRITE.
 
 CRITICAL: 
 - Use "you/your" not "the student"
 - Be warm and direct, not clinical
-- ONLY reference topics they actually discussed
+- ONLY reference topics they ACTUALLY discussed (check twice!)
 - Emotional validation should be 4-5 sentences"""
 
         analyst_prompt = f"""You are a behavioral data analyst reviewing a student's conversation patterns.
@@ -80,7 +90,12 @@ CRITICAL:
 Conversation:
 {conversation_text[:5000]}
 
-CRITICAL: Base your analysis ONLY on what was actually discussed. DO NOT invent topics.
+⚠️ CRITICAL ANTI-HALLUCINATION RULES ⚠️
+1. ONLY analyze what was EXPLICITLY discussed in the conversation
+2. DO NOT infer topics, relationships, or issues not mentioned
+3. If they talked about "girlfriend", DO NOT mention "mother", "father", or "family"
+4. If they talked about "exams", DO NOT add "parental pressure" unless stated
+5. STICK TO THEIR EXACT WORDS - do not generalize or assume
 
 Provide "Key Insights" with this structure:
 
@@ -99,16 +114,21 @@ Provide "Key Insights" with this structure:
 - [2-word weakness 5] (if applicable)
 
 *Overall Pattern:* (2-3 sentences)
-[Summary of their emotional/behavioral pattern based ONLY on what they said]
+[Summary based ONLY on what they ACTUALLY said - use their exact topics]
 
 *Behavioral Impact:* (1-2 sentences)
-[What user can bring to their behavior or life based on the conversation]
+[What user can bring to their behavior based ONLY on the conversation topics]
+
+FINAL CHECK:
+- Did I mention any person, relationship, or issue NOT in the conversation? If yes, REMOVE IT.
+- Am I analyzing their ACTUAL words or making assumptions? Stick to ACTUAL.
 
 CRITICAL: 
 - Each strength/weakness must be exactly 2 words
 - List 3-5 items for each category
-- Be specific based on actual conversation
-- Use "you/your" in Overall Pattern and Behavioral Impact"""
+- Be specific based on ACTUAL conversation (not assumptions)
+- Use "you/your" in Overall Pattern and Behavioral Impact
+- DOUBLE-CHECK: No hallucinated topics!"""
 
         planner_prompt = f"""You are a wellness coach creating a simple daily routine.
 
