@@ -2073,7 +2073,7 @@ async def chat_endpoint(chat_request: ChatRequest):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.datetime.utcnow()}
+    return {"status": "healthy", "timestamp": datetime.datetime.utcnow().isoformat()}
 
 @app.get("/router-memory/{session_id}/{student_id}")
 async def get_router_memory(session_id: str, student_id: str):
