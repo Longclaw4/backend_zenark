@@ -487,10 +487,10 @@ STUDY_TECHNIQUES = [
 @tool
 async def crisis_handler(text: str, session_id: str = "", history_snippets: List[str] = []) -> str:
     """Handle self-harm or crisis situations with immediate resources."""
-    # Inject context if available
-    context = f"\nRecent context: {' '.join(history_snippets[-2:])}" if history_snippets else ""
+    # Note: We have context available but don't show it to user in crisis situations
+    # Keep the response clean and focused on immediate help
     result: str = (
-        f"🚨 **I'm really concerned about your safety.{context}**\n\n"
+        "🚨 **I'm really concerned about your safety.**\n\n"
         "Please reach out for immediate support:\n"
         "• National Suicide Helpline India: +91 9152987821 (24/7)\n"
         "• Kiran: 1800-599-0019 (toll-free, multilingual)\n"
@@ -502,10 +502,9 @@ async def crisis_handler(text: str, session_id: str = "", history_snippets: List
 @tool
 async def substance_handler(text: str, session_id: str = "", history_snippets: List[str] = []) -> str:
     """Handle smoking/drug/alcohol queries with health-first approach."""
-    # Inject context if available
-    context = f" (building on our previous talk: {' '.join(history_snippets[-2:])})" if history_snippets else ""
+    # Note: We have context but keep message clean for user
     result: str = (
-        f"I hear that you're exploring this{context}, and it takes courage to ask. 💙\n\n"
+        "I hear that you're exploring this, and it takes courage to ask. 💙\n\n"
         "I want to be honest: smoking, vaping, or drugs can seriously harm your mental and physical health, "
         "especially during your teenage years when your brain is still developing.\n\n"
         "What's creating this pressure or curiosity? Are you feeling stressed, pressured by friends, or something else? "
@@ -516,11 +515,11 @@ async def substance_handler(text: str, session_id: str = "", history_snippets: L
 @tool
 async def moral_risk_handler(text: str, session_id: str = "", history_snippets: List[str] = []) -> str:
     """Handle violence or illegal intent with AI-driven de-escalation and empathy."""
-    # Inject context if available
-    context = f"\nRecent context: {' '.join(history_snippets[-2:])}" if history_snippets else ""
+    # Use context internally but don't show to user
+    context_info = f"\nRecent conversation: {' '.join(history_snippets[-2:])}" if history_snippets else ""
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6, openai_api_key=get_api_key())
     system_prompt = (
-        f"You are Zenark, a caring AI for teens facing tough urges. User mentioned: '{{text}}' (e.g., harm, cheating, drugs).{context}\n\n"
+        f"You are Zenark, a caring AI for teens facing tough urges. User mentioned: '{{text}}' (e.g., harm, cheating, drugs).{context_info}\n\n"
         "Respond in 2-3 sentences: 1) Acknowledge their feelings warmly (e.g., 'I hear the anger/pain/curiosity—it's real and valid'). "
         "2) Gently state the action is unsafe/wrong without judgment (e.g., 'But hurting others or risking yourself can make things heavier'). "
         "3) Affirm their worth (e.g., 'You're valuable, and you deserve better paths'). "
@@ -538,10 +537,9 @@ async def moral_risk_handler(text: str, session_id: str = "", history_snippets: 
 @tool
 async def end_chat_handler(text: str, session_id: str = "", history_snippets: List[str] = []) -> str:
     """Handle exit/bye with supportive closing."""
-    # Inject context if available
-    context = f" (reflecting on our chats: {' '.join(history_snippets[-2:])})" if history_snippets else ""
+    # Note: We have context but keep goodbye message clean
     result: str = (
-        f"Thank you for trusting me with your thoughts today{context}. 🌟\n\n"
+        "Thank you for trusting me with your thoughts today. 🌟\n\n"
         "Take a moment: close your eyes, take three deep breaths, and be proud of yourself for showing up. "
         "Remember, I'm here whenever you need to talk. Take care, and stay strong! 💪"
     )
