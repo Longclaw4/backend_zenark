@@ -43,44 +43,72 @@ def generate_autogen_report(conversation_text: str, name: str) -> dict:
 Student Name: {name}
 
 Conversation:
-{conversation_text[:3000]}
+{conversation_text[:5000]}
 
-Generate a CONCISE "Personal Wellness Guide" (MAX 10 lines total):
+CRITICAL: Base your analysis ONLY on the conversation above. DO NOT invent or assume topics not mentioned.
 
-1. *Emotional Validation* (1-2 sentences only)
-   - Acknowledge their core feeling
+Generate a CONCISE "Personal Wellness Guide":
 
-2. *Your Next Step* (1 specific action, 1 line)
-   - One immediate, doable action for today
+1. *Emotional Validation* (4-5 sentences)
+   - Acknowledge ONLY the feelings they actually expressed
+   - Use natural, warm language (not clinical)
+   - Validate their experience deeply
+   - Show understanding of their specific situation
+
+2. *Your Gentle Step Forward* (1 specific action, 1 line)
+   - A single, compassionate, low-effort immediate action to solidify progress and maintain momentum
+   - Based on THEIR actual concerns
 
 3. *Quick ZenMode* (2 activities, 1 line each)
-   - Two calming activities (e.g., "5-min breathing", "Evening walk")
+   - Two calming activities relevant to THEIR situation
 
-4. *Safety Net* (1 line, only if high distress detected)
-   - Crisis helpline number if needed
+4. *Safety Net* (1 line, only if they mentioned distress/crisis)
+   - Crisis helpline ONLY if they expressed severe distress
 
-5. *Quote* (1 line)
-   - One short motivational quote
+5. *Motivational Quote* (suggest one quote)
+   - Suggest one motivational quote which is most suited to them
+   - Should resonate with their specific situation
 
-CRITICAL: Keep total output under 10 lines. Be concise and actionable."""
+CRITICAL: 
+- Use "you/your" not "the student"
+- Be warm and direct, not clinical
+- ONLY reference topics they actually discussed
+- Emotional validation should be 4-5 sentences"""
 
         analyst_prompt = f"""You are a behavioral data analyst reviewing a student's conversation patterns.
 
 Conversation:
-{conversation_text[:3000]}
+{conversation_text[:5000]}
 
-Provide a SINGLE CONCISE paragraph called "Key Insights" (MAX 5-6 lines):
+CRITICAL: Base your analysis ONLY on what was actually discussed. DO NOT invent topics.
 
-Combine:
-- Top 2 behavioral strengths (e.g., "resilient, self-aware")
-- Top 2 growth areas (e.g., "time management, boundaries")
-- Overall emotional pattern (1 sentence)
+Provide "Key Insights" with this structure:
 
-Format as ONE flowing paragraph:
-*Key Insights:*
-[Student name] demonstrates [strength 1] and [strength 2], showing [positive pattern]. However, they face challenges with [growth area 1] and [growth area 2]. Overall, [emotional/behavioral pattern summary in 1 sentence].
+*Strengths:* (3-5 items, each 2 words)
+- [2-word strength 1] (e.g., "Seeks help", "Self-aware")
+- [2-word strength 2]
+- [2-word strength 3]
+- [2-word strength 4] (if applicable)
+- [2-word strength 5] (if applicable)
 
-CRITICAL: Maximum 5-6 lines total. Be specific but brief."""
+*Weaknesses:* (3-5 items, each 2 words)
+- [2-word weakness 1] (e.g., "Sleep disruption", "Exam anxiety")
+- [2-word weakness 2]
+- [2-word weakness 3]
+- [2-word weakness 4] (if applicable)
+- [2-word weakness 5] (if applicable)
+
+*Overall Pattern:* (2-3 sentences)
+[Summary of their emotional/behavioral pattern based ONLY on what they said]
+
+*Behavioral Impact:* (1-2 sentences)
+[What user can bring to their behavior or life based on the conversation]
+
+CRITICAL: 
+- Each strength/weakness must be exactly 2 words
+- List 3-5 items for each category
+- Be specific based on actual conversation
+- Use "you/your" in Overall Pattern and Behavioral Impact"""
 
         planner_prompt = f"""You are a wellness coach creating a simple daily routine.
 
