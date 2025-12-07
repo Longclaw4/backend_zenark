@@ -573,7 +573,7 @@ async def positive_conversation_handler(text: str, session_id: str = "", history
         dataset_context = "General positive vibe—focus on celebration."
 
     # Inject context if available
-    history_context = f"\nRecent history: {'; '.join(history_snippets[-3:])}" if history_snippets else ""
+    history_context = f"\nRecent conversation:\n{chr(10).join(history_snippets[-5:])}" if history_snippets else ""
 
     # ============================================================
     # LLM CALL (With memory context)
@@ -582,14 +582,15 @@ async def positive_conversation_handler(text: str, session_id: str = "", history
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.8, openai_api_key=get_api_key())
 
     system_prompt = (
-        f"You are Zenark. User said: '{{text}}'.{history_context}\n\n"
+        f"You are Zenark, a mental health support bot. The user just said: '{text}'.{history_context}\n\n"
         f"Dataset Context:\n{dataset_context}\n\n"
-        "Output Guide:\n"
-        "• 2–3 sentences.\n"
-        "• Reinforce positive direction.\n"
-        "• Reference the user's current message and recent history.\n"
-        "• End with exactly one playful question.\n"
-        "• Under 100 words.\n"
+        "CRITICAL RULES:\n"
+        "• CONTINUE the conversation naturally - maintain context from history\n"
+        "• If user asks a question, ANSWER it directly\n"
+        "• 2-3 sentences maximum\n"
+        "• Reinforce positive direction\n"
+        "• End with ONE playful question (or none if user asked a question)\n"
+        "• Under 100 words\n"
     )
 
     response = await llm.ainvoke([
@@ -623,7 +624,7 @@ async def negative_conversation_handler(text: str, session_id: str = "", history
         dataset_context = "General negative emotion—focus on validation."
 
     # Inject context if available
-    history_context = f"\nRecent history: {'; '.join(history_snippets[-3:])}" if history_snippets else ""
+    history_context = f"\nRecent conversation:\n{chr(10).join(history_snippets[-5:])}" if history_snippets else ""
 
     # ============================================================
     # LLM CALL (With memory context)
@@ -632,14 +633,19 @@ async def negative_conversation_handler(text: str, session_id: str = "", history
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, openai_api_key=get_api_key())
 
     system_prompt = (
-        f"You are Zenark. User said: '{{text}}'.{history_context}\n\n"
+        f"You are Zenark, a mental health support bot. The user just said: '{text}'.{history_context}\n\n"
         f"Dataset Context:\n{dataset_context}\n\n"
-        "Output Rules:\n"
-        "• 2–3 sentences.\n"
-        "• Validate without softening or motivational tone.\n"
-        "• Reflect specifics from the user's message and recent history.\n"
-        "• End with a single gentle and non-repetitive question.\n"
-        "• Stay under 100 words.\n"
+        "CRITICAL RULES:\n"
+        "• CONTINUE the conversation naturally - don't reset or ask questions already answered\n"
+        "• If user asks 'how to do it?' - ANSWER their question, don't ask what's wrong\n"
+        "• Reference recent conversation history to maintain context\n"
+        "• 2-3 sentences maximum\n"
+        "• Validate emotions without being overly motivational\n"
+        "• End with ONE gentle, non-repetitive question (or none if user asked a question)\n"
+        "• Stay under 100 words\n"
+        "\n"
+        "If the user is asking a question (like 'how to do it?'), ANSWER it directly. "
+        "Don't ask them to explain their feelings again."
     )
 
     response = await llm.ainvoke([
@@ -820,7 +826,7 @@ async def llm_generate(text: str, session_id: str = "", history_snippets: List[s
     """Generic empathetic fallback with full MemoryManager context."""
 
     # Inject context if available
-    history_context = f"\nRecent history: {'; '.join(history_snippets[-3:])}" if history_snippets else ""
+    history_context = f"\nRecent conversation:\n{chr(10).join(history_snippets[-5:])}" if history_snippets else ""
 
     # ============================================================
     # LLM RESPONSE (With memory context)
@@ -828,14 +834,15 @@ async def llm_generate(text: str, session_id: str = "", history_snippets: List[s
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, openai_api_key=get_api_key())
 
     system_prompt = (
-        f"You are Zenark.{history_context}\n"
-        "Respond empathetically.\n\n"
-        "Rules:\n"
-        "• Keep it to 2–3 sentences.\n"
-        "• Validate the emotion without therapy tone.\n"
-        "• End with exactly one gentle exploratory question.\n"
-        "• Avoid advice.\n"
-        "• Avoid clinical vocabulary.\n"
+        f"You are Zenark, a mental health support bot.{history_context}\n\n"
+        "CRITICAL RULES:\n"
+        "• CONTINUE the conversation - don't reset or repeat questions\n"
+        "• If user asks a question, ANSWER it directly\n"
+        "• Keep it to 2-3 sentences\n"
+        "• Validate emotions without therapy tone\n"
+        "• End with ONE gentle question (or none if user asked a question)\n"
+        "• Avoid advice unless specifically asked\n"
+        "• Avoid clinical vocabulary\n"
     )
 
     r = await llm.ainvoke([
@@ -1654,6 +1661,34 @@ def make_cache_key(*args, **kwargs) -> str:
     # Ignore name
     return f"zenark_resp:{session_id}:{student_id}:{hashlib.md5(user_text.encode('utf-8')).hexdigest()}"
 
+def build_history_snippets(history: BaseChatMessageHistory, limit: int = 20) -> List[str]:
+    """
+    Convert chat history into text snippets for context.
+    
+    Args:
+        history: Chat message history object
+        limit: Maximum number of recent messages to include (default: 20 for full context)
+    
+    Returns:
+        List of formatted conversation snippets
+    """
+    from langchain_core.messages import HumanMessage, AIMessage
+    
+    snippets = []
+    messages = history.messages[-limit:] if hasattr(history, 'messages') else []
+    
+    for msg in messages:
+        if isinstance(msg, HumanMessage):
+            snippets.append(f"User: {msg.content}")
+        elif isinstance(msg, AIMessage):
+            snippets.append(f"Zenark: {msg.content}")
+        else:
+            # Handle other message types
+            role = getattr(msg, 'type', 'Unknown')
+            snippets.append(f"{role}: {msg.content}")
+    
+    return snippets
+
 # The @cached and generate_response remain the same
 @cached(ttl=600, cache=Cache.MEMORY, key_builder=make_cache_key)
 async def generate_response(user_text: str, session_id: str, student_id: str = "anonymous") -> str:
@@ -1678,7 +1713,7 @@ async def generate_response(user_text: str, session_id: str, student_id: str = "
     # BUILD SHORT HISTORY SNIPPETS FROM MONGODB HISTORY
     # ---------------------------------------------
     history = mongo_memory.get_history()
-    history_snippets = build_history_snippets(history, limit=6)
+    history_snippets = build_history_snippets(history, limit=80)  # 80 messages for long conversations
 
     # ---------------------------------------------
     # GRAPH INPUT
