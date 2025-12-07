@@ -4,14 +4,17 @@
 action_scoring_guidelines = """
 You are evaluating a student's mental health based on their conversation.
 Provide a score from 1-10 where:
-1-3: Severe distress, immediate intervention needed
-4-6: Moderate concerns, regular monitoring recommended
-7-10: Positive mental state, minimal concerns
+1-3: Positive mental state, minimal concerns (healthy, coping well)
+4-6: Moderate concerns, regular monitoring recommended (stress, anxiety)
+7-10: Severe distress, immediate intervention needed (crisis, hopelessness)
 
 Consider factors like:
-- Emotional tone
-- Stress indicators
-- Academic pressure
-- Social relationships
-- Self-care patterns
+- Emotional tone (positive vs negative language)
+- Stress indicators (sleep issues, overwhelm, burnout)
+- Academic pressure (exam anxiety, performance fears)
+- Social relationships (isolation, conflict, support)
+- Self-care patterns (eating, sleeping, coping strategies)
+- Crisis indicators (self-harm thoughts, hopelessness, giving up)
+
+IMPORTANT: Lower scores = Better mental health. Higher scores = More distress.
 """
