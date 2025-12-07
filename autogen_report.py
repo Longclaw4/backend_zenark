@@ -34,8 +34,10 @@ def generate_autogen_report(conversation_text: str, name: str) -> dict:
         )
         
         # ============================================
-        # PART 1: THERAPIST AGENT (Wellness Guide)
+        # PARALLEL EXECUTION - All 3 agents at once
         # ============================================
+        
+        # Define all prompts first
         therapist_prompt = f"""You are a compassionate mental health therapist analyzing a student's conversation.
 
 Student Name: {name}
@@ -43,115 +45,103 @@ Student Name: {name}
 Conversation:
 {conversation_text[:3000]}
 
-Generate a "Personal Wellness Guide" with these sections:
+Generate a CONCISE "Personal Wellness Guide" (MAX 10 lines total):
 
-1. *Emotional Validation* (2-3 sentences)
-   - Acknowledge their feelings and struggles
-   - Show empathy and understanding
+1. *Emotional Validation* (1-2 sentences only)
+   - Acknowledge their core feeling
 
-2. *Your gentle step forward* (1 specific action)
-   - A single, compassionate, low-effort action to solidify progress and maintain momentum.
+2. *Your Next Step* (1 specific action, 1 line)
+   - One immediate, doable action for today
 
-3. *ZenMode Prescription* (2-3 activities)
-   - Calming activities suited to their situation
-   - Examples: breathing exercises, journaling, nature walk
+3. *Quick ZenMode* (2 activities, 1 line each)
+   - Two calming activities (e.g., "5-min breathing", "Evening walk")
 
-4. *Professional Safety Net* (if needed)
-   - Crisis helplines if distress is high
-   - Encouragement to seek professional help
+4. *Safety Net* (1 line, only if high distress detected)
+   - Crisis helpline number if needed
 
-5. *Motivational Quote*
-   - Suggest user one motivational quote which is most suited to them
+5. *Quote* (1 line)
+   - One short motivational quote
 
-Keep tone warm, non-judgmental, and supportive. Focus on hope and actionable steps."""
+CRITICAL: Keep total output under 10 lines. Be concise and actionable."""
 
-        therapist_response = llm.invoke([
-            SystemMessage(content="You are an empathetic mental health therapist."),
-            HumanMessage(content=therapist_prompt)
-        ])
-        
-        therapist_content = therapist_response.content if isinstance(therapist_response.content, str) else str(therapist_response.content)
-        
-        # ============================================
-        # PART 2: DATA ANALYST AGENT (Strengths & Weaknesses)
-        # ============================================
         analyst_prompt = f"""You are a behavioral data analyst reviewing a student's conversation patterns.
 
 Conversation:
 {conversation_text[:3000]}
 
-Analyze and provide:
+Provide a SINGLE CONCISE paragraph called "Key Insights" (MAX 5-6 lines):
 
-1. *Strengths* (3-5 specific behavioral strengths)
-   - Examples: "Shows resilience by seeking help", "Self-aware about stress triggers"
-   - Be specific, not generic
+Combine:
+- Top 2 behavioral strengths (e.g., "resilient, self-aware")
+- Top 2 growth areas (e.g., "time management, boundaries")
+- Overall emotional pattern (1 sentence)
 
-2. *Weaknesses/Growth Areas* (3-5 specific challenges)
-   - Examples: "Struggles with time management", "Difficulty setting boundaries"
-   - Frame as growth opportunities, not failures
+Format as ONE flowing paragraph:
+*Key Insights:*
+[Student name] demonstrates [strength 1] and [strength 2], showing [positive pattern]. However, they face challenges with [growth area 1] and [growth area 2]. Overall, [emotional/behavioral pattern summary in 1 sentence].
 
-3. *Overall Pattern* (2-3 sentences)
-   - Summary of their emotional/behavioral patterns
-   - Key insights about their coping style
+CRITICAL: Maximum 5-6 lines total. Be specific but brief."""
 
-Format your response as:
-
-*Strengths:*
-- [strength 1]
-- [strength 2]
-...
-
-*Growth Areas:*
-- [area 1]
-- [area 2]
-...
-
-*Overall Pattern:*
-[summary paragraph]"""
-
-        analyst_response = llm.invoke([
-            SystemMessage(content="You are a behavioral data analyst."),
-            HumanMessage(content=analyst_prompt)
-        ])
-        
-        analyst_content = analyst_response.content if isinstance(analyst_response.content, str) else str(analyst_response.content)
-        
-        # ============================================
-        # PART 3: 7-DAY SELF-CARE PLANNER
-        # ============================================
-        planner_prompt = f"""You are the Personalized Mental Wellness Planner Generator. Your task is to construct a highly actionable, evidence-based, 7-Day Mental Wellness Plan that drives positive behavioral change, based on the user's current status and identified constraints.
+        planner_prompt = f"""You are a wellness coach creating a simple daily routine.
 
 Based on this conversation:
 {conversation_text[:2000]}
 
-Create a realistic 7-day plan with:
-
-*Day 1-7 Structure:*
-- Morning routine (10-15 min)
-- Study/work focus (with breaks)
-- Social connection activity
-- Evening wind-down
-- ZenMode activity
-
-Make it:
-- Culturally appropriate for Indian students
-- Realistic and achievable
-- Focused on gradual improvement
-- Include specific times/durations
+Create "Top 3 Daily Habits" (MAX 10-15 lines total):
 
 Format as:
-*Day 1: [Theme]*
-Morning: ...
-Afternoon: ...
-Evening: ...
-ZenMode: ..."""
+*Top 3 Daily Habits for This Week:*
 
-        planner_response = llm.invoke([
-            SystemMessage(content="You are a wellness coach and routine planner."),
-            HumanMessage(content=planner_prompt)
-        ])
+*1. Morning Anchor (5-10 min)*
+[One specific morning routine - e.g., "7:00 AM: 5-min gratitude journaling + stretching"]
+
+*2. Study/Work Focus*
+[One productivity technique - e.g., "Pomodoro: 25min study, 5min break, repeat 4x"]
+
+*3. Evening Wind-Down (15-20 min)*
+[One evening routine - e.g., "9:00 PM: No screens, 10-min breathing, early sleep"]
+
+*Weekly Bonus:*
+[One social/self-care activity - e.g., "Sunday: 30-min nature walk or call a friend"]
+
+CRITICAL: Keep under 15 lines. Be specific with times and durations. Make it realistic for Indian students."""
+
+        # Run all 3 agents in parallel using asyncio
+        import asyncio
         
-        planner_content = planner_response.content if isinstance(planner_response.content, str) else str(planner_response.content)
+        async def generate_all_agents():
+            """Nested async function to run all 3 agents in parallel"""
+            
+            async def get_therapist():
+                response = await llm.ainvoke([
+                    SystemMessage(content="You are an empathetic mental health therapist. Be CONCISE."),
+                    HumanMessage(content=therapist_prompt)
+                ])
+                return response.content if isinstance(response.content, str) else str(response.content)
+            
+            async def get_analyst():
+                response = await llm.ainvoke([
+                    SystemMessage(content="You are a behavioral data analyst. Be CONCISE."),
+                    HumanMessage(content=analyst_prompt)
+                ])
+                return response.content if isinstance(response.content, str) else str(response.content)
+            
+            async def get_planner():
+                response = await llm.ainvoke([
+                    SystemMessage(content="You are a wellness coach and routine planner."),
+                    HumanMessage(content=planner_prompt)
+                ])
+                return response.content if isinstance(response.content, str) else str(response.content)
+            
+            # Execute all 3 in parallel (3x faster!)
+            return await asyncio.gather(
+                get_therapist(),
+                get_analyst(),
+                get_planner()
+            )
+        
+        # Run the async function
+        therapist_content, analyst_content, planner_content = asyncio.run(generate_all_agents())
         
         # ============================================
         # AGGREGATE REPORT
@@ -187,11 +177,11 @@ ZenMode: ..."""
             "report": [
                 {
                     "name": "TherapistAgent",
-                    "content": f"Analysis for {name}: Based on the conversation, the student shows engagement. Further monitoring recommended."
+                    "content": f"*Personal Wellness Guide:*\n\n1. *Validation:* You're taking a positive step by seeking support.\n\n2. *Next Step:* Take 3 deep breaths right now.\n\n3. *ZenMode:* Try 5-min meditation or a short walk.\n\n4. *Quote:* \"Progress, not perfection.\""
                 },
                 {
                     "name": "DataAnalystAgent",
-                    "content": "*Strengths:\n- Seeking support\n- Open communication\n\nGrowth Areas:\n- Stress management\n- Coping strategies\n\nOverall Pattern:*\nStudent is actively engaging with mental health support."
+                    "content": f"*Key Insights:*\n{name} demonstrates openness to support and self-awareness. They may benefit from developing stress management and coping strategies. Overall, the student is actively engaging with mental health resources, showing a positive step toward wellbeing."
                 }
             ],
             "error": str(e)
