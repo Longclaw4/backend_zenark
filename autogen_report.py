@@ -45,21 +45,23 @@ Conversation:
 
 Generate a "Personal Wellness Guide" with these sections:
 
-1. **Emotional Validation** (2-3 sentences)
+1. *Emotional Validation* (2-3 sentences)
    - Acknowledge their feelings and struggles
    - Show empathy and understanding
 
-2. **Immediate Micro-Action** (1 specific action)
-   - One small, doable step they can take today
-   - Make it concrete and achievable
+2. *Your gentle step forward* (1 specific action)
+   - A single, compassionate, low-effort action to solidify progress and maintain momentum.
 
-3. **ZenMode Prescription** (2-3 activities)
+3. *ZenMode Prescription* (2-3 activities)
    - Calming activities suited to their situation
    - Examples: breathing exercises, journaling, nature walk
 
-4. **Professional Safety Net** (if needed)
+4. *Professional Safety Net* (if needed)
    - Crisis helplines if distress is high
    - Encouragement to seek professional help
+
+5. *Motivational Quote*
+   - Suggest user one motivational quote which is most suited to them
 
 Keep tone warm, non-judgmental, and supportive. Focus on hope and actionable steps."""
 
@@ -80,31 +82,31 @@ Conversation:
 
 Analyze and provide:
 
-1. **Strengths** (3-5 specific behavioral strengths)
+1. *Strengths* (3-5 specific behavioral strengths)
    - Examples: "Shows resilience by seeking help", "Self-aware about stress triggers"
    - Be specific, not generic
 
-2. **Weaknesses/Growth Areas** (3-5 specific challenges)
+2. *Weaknesses/Growth Areas* (3-5 specific challenges)
    - Examples: "Struggles with time management", "Difficulty setting boundaries"
    - Frame as growth opportunities, not failures
 
-3. **Overall Pattern** (2-3 sentences)
+3. *Overall Pattern* (2-3 sentences)
    - Summary of their emotional/behavioral patterns
    - Key insights about their coping style
 
 Format your response as:
 
-**Strengths:**
+*Strengths:*
 - [strength 1]
 - [strength 2]
 ...
 
-**Growth Areas:**
+*Growth Areas:*
 - [area 1]
 - [area 2]
 ...
 
-**Overall Pattern:**
+*Overall Pattern:*
 [summary paragraph]"""
 
         analyst_response = llm.invoke([
@@ -117,14 +119,14 @@ Format your response as:
         # ============================================
         # PART 3: 7-DAY SELF-CARE PLANNER
         # ============================================
-        planner_prompt = f"""You are a wellness coach creating a personalized 7-day self-care plan.
+        planner_prompt = f"""You are the Personalized Mental Wellness Planner Generator. Your task is to construct a highly actionable, evidence-based, 7-Day Mental Wellness Plan that drives positive behavioral change, based on the user's current status and identified constraints.
 
 Based on this conversation:
 {conversation_text[:2000]}
 
 Create a realistic 7-day plan with:
 
-**Day 1-7 Structure:**
+*Day 1-7 Structure:*
 - Morning routine (10-15 min)
 - Study/work focus (with breaks)
 - Social connection activity
@@ -138,7 +140,7 @@ Make it:
 - Include specific times/durations
 
 Format as:
-**Day 1: [Theme]**
+*Day 1: [Theme]*
 Morning: ...
 Afternoon: ...
 Evening: ...
@@ -189,7 +191,7 @@ ZenMode: ..."""
                 },
                 {
                     "name": "DataAnalystAgent",
-                    "content": "**Strengths:**\n- Seeking support\n- Open communication\n\n**Growth Areas:**\n- Stress management\n- Coping strategies\n\n**Overall Pattern:**\nStudent is actively engaging with mental health support."
+                    "content": "*Strengths:\n- Seeking support\n- Open communication\n\nGrowth Areas:\n- Stress management\n- Coping strategies\n\nOverall Pattern:*\nStudent is actively engaging with mental health support."
                 }
             ],
             "error": str(e)
