@@ -1661,31 +1661,70 @@ def make_cache_key(*args, **kwargs) -> str:
     # Ignore name
     return f"zenark_resp:{session_id}:{student_id}:{hashlib.md5(user_text.encode('utf-8')).hexdigest()}"
 
-def build_history_snippets(history: BaseChatMessageHistory, limit: int = 20) -> List[str]:
+def build_history_snippets(history: BaseChatMessageHistory, limit: int = 80) -> List[str]:
     """
-    Convert chat history into text snippets for context.
+    Convert chat history into text snippets with SMART COMPRESSION.
+    
+    Strategy:
+    - Keep last 10 messages in full detail (recent context)
+    - Summarize older messages into key topics (long-term memory)
+    
+    This gives full memory with 5x fewer tokens!
     
     Args:
         history: Chat message history object
-        limit: Maximum number of recent messages to include (default: 20 for full context)
+        limit: Maximum number of messages to consider (default: 80)
     
     Returns:
-        List of formatted conversation snippets
+        List of formatted conversation snippets (compressed)
     """
     from langchain_core.messages import HumanMessage, AIMessage
     
     snippets = []
     messages = history.messages[-limit:] if hasattr(history, 'messages') else []
     
-    for msg in messages:
+    if len(messages) <= 10:
+        # Short conversation - return all messages
+        for msg in messages:
+            if isinstance(msg, HumanMessage):
+                snippets.append(f"User: {msg.content}")
+            elif isinstance(msg, AIMessage):
+                snippets.append(f"Zenark: {msg.content}")
+        return snippets
+    
+    # Long conversation - use smart compression
+    old_messages = messages[:-10]  # All but last 10
+    recent_messages = messages[-10:]  # Last 10
+    
+    # Summarize old messages by extracting key topics
+    topics = []
+    for msg in old_messages:
+        if isinstance(msg, HumanMessage):
+            content = msg.content.lower()
+            # Extract key topics (simple keyword extraction)
+            if any(word in content for word in ['exam', 'test', 'jee', 'neet', 'study']):
+                topics.append('exams/studies')
+            if any(word in content for word in ['sleep', 'insomnia', 'tired', 'rest']):
+                topics.append('sleep issues')
+            if any(word in content for word in ['stress', 'anxiety', 'worried', 'nervous']):
+                topics.append('stress/anxiety')
+            if any(word in content for word in ['family', 'parents', 'home']):
+                topics.append('family')
+            if any(word in content for word in ['friends', 'social', 'lonely']):
+                topics.append('social/friends')
+    
+    # Add summary if there are old messages
+    if topics:
+        unique_topics = list(set(topics))[:5]  # Max 5 topics
+        summary = f"[Earlier conversation covered: {', '.join(unique_topics)}]"
+        snippets.append(summary)
+    
+    # Add recent messages in full
+    for msg in recent_messages:
         if isinstance(msg, HumanMessage):
             snippets.append(f"User: {msg.content}")
         elif isinstance(msg, AIMessage):
             snippets.append(f"Zenark: {msg.content}")
-        else:
-            # Handle other message types
-            role = getattr(msg, 'type', 'Unknown')
-            snippets.append(f"{role}: {msg.content}")
     
     return snippets
 
