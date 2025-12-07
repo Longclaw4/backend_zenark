@@ -856,8 +856,28 @@ Do not add decoration, emojis, motivation, or filler.
 
     # general study strategies prompt
     top_methods = ", ".join(STUDY_TECHNIQUES[:4])
+    
+    # Check if user is responding to previous question
+    user_mentioned_technique = any(technique.lower() in t for technique in STUDY_TECHNIQUES)
+    already_asked_structure = any("study structure" in snippet.lower() for snippet in history_snippets[-3:])
+    
+    # If user mentioned a technique or answered the structure question
+    if user_mentioned_technique or (already_asked_structure and len(history_snippets) > 2):
+        prompt = f"""
+You are an exam-performance assistant.{history_context}
 
-    prompt = f"""
+The student mentioned: "{text}"
+
+Based on their response, provide:
+- Specific advice on how to optimize their current study method
+- One concrete improvement they can make TODAY
+- A follow-up question about their biggest study challenge (NOT about study structure again)
+
+Keep it practical and actionable. No decoration or filler.
+"""
+    else:
+        # First time asking about study methods
+        prompt = f"""
 You are an exam-performance assistant.{history_context}
 Avoid emotional framing and supportive tones.
 
@@ -2431,7 +2451,21 @@ def merge_therapist_and_analyst(data: dict) -> dict:
     Removes JSON block and the 'Strengths & Weaknesses JSON and Dashboard Summary' section heading.
     DataAnalystAgent remains unchanged.
     """
-    report_items = data.get("report", {}).get("report", [])
+    # Handle both possible structures:
+    # 1. {"report": {"report": [...]}} (old structure)
+    # 2. {"report": [...]} (new structure from autogen_report.py)
+    
+    report_field = data.get("report", [])
+    
+    # If report_field is a dict with nested "report", extract it
+    if isinstance(report_field, dict):
+        report_items = report_field.get("report", [])
+    # If report_field is already a list, use it directly
+    elif isinstance(report_field, list):
+        report_items = report_field
+    else:
+        # Fallback: empty list
+        report_items = []
 
     therapist = None
     analyst = None
