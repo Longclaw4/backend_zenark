@@ -2071,8 +2071,9 @@ async def chat_endpoint(chat_request: ChatRequest):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/health")
+@app.head("/health")
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint (supports GET and HEAD for monitoring services)."""
     return {"status": "healthy", "timestamp": datetime.datetime.utcnow().isoformat()}
 
 @app.get("/router-memory/{session_id}/{student_id}")
