@@ -679,7 +679,7 @@ async def positive_conversation_handler(text: str, session_id: str = "", history
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - maintain context from history\n"
         "• Do not start with 'it sounds like'\n"
-        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
+        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         "• If user asks a question, ANSWER it directly\n"
         "• 2-3 sentences maximum\n"
         "• Reinforce positive direction\n"
@@ -732,7 +732,7 @@ async def negative_conversation_handler(text: str, session_id: str = "", history
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - don't reset or ask questions already answered\n"
         "• Do not start with 'it sounds like'\n"
-        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
+        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         "• If user asks 'how to do it?' - ANSWER their question, don't ask what's wrong\n"
         "• Reference recent conversation history to maintain context\n"
         "• 2-3 sentences maximum\n"
@@ -785,7 +785,7 @@ async def marks_tool(text: str, student_id: str, session_id: str = "", history_s
             "Respond in 2–3 sentences.\n"
             "Validate stress. No advice. End with one open question.\n"
             "Do not start with 'it sounds like'\n"
-            "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
+            "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         )
         r = await llm.ainvoke([
             SystemMessage(content=prompt.format(text=text)),
@@ -852,7 +852,7 @@ async def marks_tool(text: str, student_id: str, session_id: str = "", history_s
         "– Ask exactly one gentle question.\n"
         "– No advice.\n"
         "Do not start with 'it sounds like'\n"
-        "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
+        "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
     )
 
     r = await llm.ainvoke([
@@ -1149,7 +1149,7 @@ class MultilingualDetector:
             f"If you're comfortable, please share what's on your mind in English, and I'll be here to listen and support you.\n\n"
             f"Is there something specific you'd like to talk about today?"
             "• Do not start with 'it sounds like'\n"
-            "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
+            "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         )
         return response
 
