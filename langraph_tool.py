@@ -2431,6 +2431,13 @@ Return only a single integer (1–10) as the Global Distress Score."""
         else:
             score = 1  # Default if no session found
         
+        # Check if we have a valid session_id
+        if session_id is None:
+            return JSONResponse(
+                status_code=404, 
+                content={"error": "No conversation session found for this user. Please have a conversation first."}
+            )
+        
         print(score)
         report_data = await generate_report(user_id_obj, session_id, score)
 
