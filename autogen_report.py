@@ -162,34 +162,33 @@ CRITICAL:
 - DOUBLE-CHECK: No hallucinated topics!
 - NO MENTIONS of people/relationships not discussed!"""
 
-        planner_prompt = f"""Role: You are the Personalized Mental Wellness Planner Generator. Your task is to construct a highly actionable, evidence-based, 7-Day Mental Wellness Plan that drives positive behavioral change, based on the user's current status and identified constraints.
+        planner_prompt = f"""Role: You are the Personalized Mental Wellness Planner Generator. Your task is to construct a highly actionable, evidence-based Weekly Mental Wellness Plan that drives positive behavioral change, based on the user's current status and identified constraints.
 
 Based on this conversation:
 {conversation_text[:2000]}
 
-Create a realistic 7-day plan with:
+Output MUST be ONLY this concise structure, filling in the content. Do not add any preamble or extra text.
 
-**Day 1-7 Structure:**
-- Morning routine (10-15 min)
-- Study/work focus (with breaks)
-- Social connection activity
-- Evening wind-down
-- ZenMode activity
+### Your Personalized Weekly Plan
 
-Make it:
-- Culturally appropriate for Indian students
-- Realistic and achievable
-- Focused on gradual improvement
-- Include specific times/durations
+1. FOCUS: [3 Core Focus Areas, comma-separated, e.g., Stress Reduction, Behavioral Activation, Sleep Hygiene]
 
-**ALSO INCLUDE: A Personalized Daily Timetable**
-After the 7-day plan, create ONE single daily timetable that the user can follow every day. This should be a consistent routine with specific times (e.g., 6:00 AM - Wake up, 7:00 AM - Breakfast, etc.) that incorporates their wellness activities.
+2. ACTIONS:
+* *[Action 1 Name]:* Days: [Suggested Days, e.g., Mon/Thu]. When: [Context, e.g., Before first meeting]. Task: [Specific, low-effort task]. Reflect: [Self-aware question, e.g., How did this shift your energy?].
+* *[Action 2 Name]:* Days: [Suggested Days, e.g., Tue/Fri]. When: [Context, e.g., During lunch break]. Task: [Specific, low-effort task]. Reflect: [Self-aware question, e.g., What feeling did you notice?].
+* *[Action 3 Name]:* Days: [Suggested Days, e.g., Wed/Sat]. When: [Context, e.g., When arriving home]. Task: [Specific, low-effort task]. Reflect: [Self-aware question, e.g., Did tension decrease?].
+* *[Action 4 Name (Optional)]:* Days: [Suggested Day, e.g., Sun]. When: [Context, e.g., Before sleep]. Task: [Specific, low-effort task]. Reflect: [Self-aware question, e.g., What positive was created this week?].
 
-What it generates: 
-1. 7-day personalized self-care routine with daily activities
-2. One consistent daily timetable to follow every day
+3. GENTLE STEP: [1 compassionate, actionable follow-up sentence for the next day.]
 
-CRITICAL: Be flexible and creative. Don't use the same format every time. Adapt the plan to their specific situation and needs."""
+4. DAILY TIMETABLE: [Create ONE personalized daily timetable with specific times (e.g., 6:00 AM - Wake up, 7:00 AM - Breakfast, etc.) that the user can follow every day, incorporating wellness activities]
+
+CRITICAL RULES:
+- Be culturally appropriate for Indian students
+- Make tasks realistic and achievable
+- Focus on gradual improvement
+- Include specific times/durations in the daily timetable
+- Use ONLY the structure above, no extra text"""
 
         # Run all 3 agents in parallel using asyncio
         import asyncio
