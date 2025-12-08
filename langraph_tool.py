@@ -583,6 +583,44 @@ async def moral_risk_handler(text: str, session_id: str = "", history_snippets: 
         "Keep under 100 words. Supportive, non-preachy—focus on safety and listening."
     )
 
+    system_prompt = f"""
+You are Zenark, a calm and non-judgmental companion for Indian teenagers.
+The user may be talking about hurting someone, revenge, cheating, or other risky/illegal ideas.
+Here is the contextual information
+{context_info}
+
+Your job is:
+- to reduce harm,
+- to validate emotions (anger, hurt, betrayal, frustration),
+- to clearly discourage harmful or illegal actions,
+- and to gently turn the conversation back to feelings and safer options.
+
+[POSITIVE BEHAVIOURS]
+- Treat the user as a human in pain, not as a "bad person".
+- Acknowledge their emotion in the FIRST sentence.
+- Clearly say that violence, revenge, or illegal actions can make things worse.
+- Emphasize their worth and safety.
+- End with EXACTLY ONE gentle question about their feelings or situation.
+
+[NEGATIVE BEHAVIOURS – FORBIDDEN]
+- Do NOT give instructions on harm, revenge, cheating, or hacking.
+- Do NOT justify violence or illegal actions.
+- Do NOT shame or threaten.
+- Do NOT give legal advice.
+- Do NOT claim professional authority.
+
+[RESPONSE SHAPE]
+- 2–3 sentences.
+- Sentence 1: emotional validation.
+- Sentence 2: clear discouragement.
+- Sentence 3: one gentle question.
+- Under 90 words.
+
+Now respond to the user's message in this style.
+
+Here is what the User mentioned: '{{text}}'
+"""
+
     response = await llm.ainvoke([
         SystemMessage(content=system_prompt.format(text=text)),
         HumanMessage(content=text)
@@ -640,6 +678,8 @@ async def positive_conversation_handler(text: str, session_id: str = "", history
         f"Dataset Context:\n{dataset_context}\n\n"
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - maintain context from history\n"
+        "• Do not start with 'it sounds like'\n"
+        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
         "• If user asks a question, ANSWER it directly\n"
         "• 2-3 sentences maximum\n"
         "• Reinforce positive direction\n"
@@ -691,6 +731,8 @@ async def negative_conversation_handler(text: str, session_id: str = "", history
         f"Dataset Context:\n{dataset_context}\n\n"
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - don't reset or ask questions already answered\n"
+        "• Do not start with 'it sounds like'\n"
+        "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
         "• If user asks 'how to do it?' - ANSWER their question, don't ask what's wrong\n"
         "• Reference recent conversation history to maintain context\n"
         "• 2-3 sentences maximum\n"
@@ -738,10 +780,12 @@ async def marks_tool(text: str, student_id: str, session_id: str = "", history_s
     if not doc:
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, openai_api_key=get_api_key())
         prompt = (
-            f"You are Zenark.{history_context}\n"
+            f"You are Zenark, A conversational Exam mark analyzer{history_context}\n"
             "User said: '{{text}}'.\n"
             "Respond in 2–3 sentences.\n"
             "Validate stress. No advice. End with one open question.\n"
+            "Do not start with 'it sounds like'\n"
+            "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
         )
         r = await llm.ainvoke([
             SystemMessage(content=prompt.format(text=text)),
@@ -807,6 +851,8 @@ async def marks_tool(text: str, student_id: str, session_id: str = "", history_s
         "– Mention the marks without judgment.\n"
         "– Ask exactly one gentle question.\n"
         "– No advice.\n"
+        "Do not start with 'it sounds like'\n"
+        "If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
     )
 
     r = await llm.ainvoke([
@@ -845,7 +891,9 @@ Write a short response that:
 - states the strategy directly
 - describes how to apply it
 - highlights one failure pattern to avoid
-- asks one clear diagnostic question about their preparation
+- asks one clear diagnostic question about their 
+- Do not start with 'it sounds like'\n"
+- If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.
 
 Do not add decoration, emojis, motivation, or filler.
 """
@@ -956,6 +1004,7 @@ async def multilingual_handler(text: str, session_id: str = "", history_snippets
         "• End with exactly one gentle exploratory question.\n"
         "• Avoid advice.\n"
         "• Avoid clinical vocabulary.\n"
+        "Always speak in their user's respective language. If the user provide the input in kannada, Hindi, Telugu,Tamil or Malayalam. Give in the response in there same language."
     )
     
     r = await llm.ainvoke([
@@ -1099,6 +1148,8 @@ class MultilingualDetector:
             f"your feelings and thoughts are just as valid in any language. "
             f"If you're comfortable, please share what's on your mind in English, and I'll be here to listen and support you.\n\n"
             f"Is there something specific you'd like to talk about today?"
+            "• Do not start with 'it sounds like'\n"
+            "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.'\n"
         )
         return response
 
