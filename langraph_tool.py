@@ -1669,34 +1669,15 @@ async def router_node(state: GraphState) -> Dict[str, Any]:
     tool_history = state.get("tool_history", [])
     
     # ============================================================
-    # PRIORITY 0: MULTILINGUAL DETECTION
+    # PRIORITY 0: MULTILINGUAL DETECTION (DISABLED - Using natural language matching instead)
     # ============================================================
+    # We no longer route to multilingual_handler
+    # Instead, conversation handlers have Hinglish/Kanglish instructions
+    # This allows natural language matching without forced greetings
     detected_lang = MultilingualDetector.detect_language(text)
     if detected_lang:
-        # Check if conversation already started (has history)
-        has_history = len(history) > 0 or len(tool_history) > 0
-        
-        if has_history:
-            # User is writing in regional language mid-conversation
-            # Don't route to multilingual_handler (which shows greeting)
-            # Instead, let normal routing handle it with Hinglish/Kanglish instructions
-            logging.info(f"🌐 Router: Multilingual detected ({detected_lang}) but conversation active - using normal routing with Hinglish")
-            # Continue to normal routing below
-        else:
-            # First message in regional language - show greeting
-            logging.info(f"🌐 Router: Multilingual detected ({detected_lang}) - routing to multilingual_handler")
-            return {
-                "emotion": "neutral",
-                "selected_tool": "multilingual_handler",
-                "tool_input": text,
-                "tool_history": tool_history + ["multilingual_handler"],
-                "debug_info": {
-                    "emotion": "neutral",
-                    "tool": "multilingual_handler",
-                    "detected_language": detected_lang,
-                    "previous_tool": tool_history[-1] if tool_history else None
-                }
-            }
+        logging.info(f"🌐 Language detected: {detected_lang} - will respond naturally in same language")
+        # Don't route to multilingual_handler - let normal routing handle it
     
     # ============================================================
     # PRIORITY 1: INTENT CLASSIFICATION PRE-PROCESSING
