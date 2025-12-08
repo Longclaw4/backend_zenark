@@ -1134,18 +1134,15 @@ class MultilingualDetector:
     
     @staticmethod
     async def get_multilingual_response(text: str, detected_lang: str) -> str:
-        """Generate response acknowledging language and offering English support"""
+        """Generate response in the detected language"""
         lang_config = MultilingualDetector.INDIAN_LANGUAGE_PATTERNS.get(detected_lang, {})
         greeting = lang_config.get('greeting', 'Hello! 🙏')
         
-        # Empathetic response acknowledging language preference
+        # Respond directly in the detected language
+        # The LLM will handle the actual translation based on the system prompt
         response = (
             f"{greeting}\n\n"
-            f"I can see you're writing in {detected_lang.capitalize()}. That's wonderful! 💙\n\n"
-            f"Right now, I can understand and respond best in English, but I want you to know that "
-            f"your feelings and thoughts are just as valid in any language. "
-            f"If you're comfortable, please share what's on your mind in English, and I'll be here to listen and support you.\n\n"
-            f"Is there something specific you'd like to talk about today?"
+            f"I'm here to listen and support you. How are you feeling today? 💙"
         )
         return response
 
