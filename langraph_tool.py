@@ -678,7 +678,6 @@ async def positive_conversation_handler(text: str, session_id: str = "", history
         f"Dataset Context:\n{dataset_context}\n\n"
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - maintain context from history\n"
-        "• Do not start with 'it sounds like'\n"
         "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         "• If user asks a question, ANSWER it directly\n"
         "• 2-3 sentences maximum\n"
@@ -731,7 +730,6 @@ async def negative_conversation_handler(text: str, session_id: str = "", history
         f"Dataset Context:\n{dataset_context}\n\n"
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation naturally - don't reset or ask questions already answered\n"
-        "• Do not start with 'it sounds like'\n"
         "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         "• If user asks 'how to do it?' - ANSWER their question, don't ask what's wrong\n"
         "• Reference recent conversation history to maintain context\n"
@@ -893,7 +891,7 @@ Write a short response that:
 - highlights one failure pattern to avoid
 - asks one clear diagnostic question about their 
 - Do not start with 'it sounds like'\n"
-- If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, answer the user in his same language.
+- If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language
 
 Do not add decoration, emojis, motivation, or filler.
 """
@@ -1148,7 +1146,6 @@ class MultilingualDetector:
             f"your feelings and thoughts are just as valid in any language. "
             f"If you're comfortable, please share what's on your mind in English, and I'll be here to listen and support you.\n\n"
             f"Is there something specific you'd like to talk about today?"
-            "• Do not start with 'it sounds like'\n"
             "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         )
         return response
