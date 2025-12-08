@@ -193,13 +193,14 @@ class AsyncMongoChatMemory:
     def __init__(self, session_id: str, chats_col: AsyncIOMotorCollection, student_id: Optional[str] = None):
         """
         Initialize async MongoDB chat memory for session persistence.
+        Note: History loading is done explicitly via _load_existing_chats_no_session() in the endpoint
         """
         self.session_id = session_id
         self.student_id = student_id
         self.history = ChatMessageHistory()
         self.tool_history: List[str] = []
         self.chats_col = chats_col
-        asyncio.create_task(self._load_existing())
+        # DO NOT auto-load here - we explicitly call _load_existing_chats_no_session() in the endpoint
 
     async def _load_existing(self) -> None:
         """
@@ -2234,6 +2235,8 @@ async def chat_endpoint(chat_request: ChatRequest):
         # This ensures memory persists across sessions even when frontend generates new session_id
         # ---------------------------------------------
         await mongo_memory._load_existing_chats_no_session()
+        loaded_messages = len(mongo_memory.history.messages)
+        logging.info(f"💾 Loaded {loaded_messages} messages for user {student_id} (session: {session_id})")
 
         # ---------------------------------------------
         # SAVE USER MESSAGE TO MONGODB
