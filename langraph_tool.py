@@ -1707,9 +1707,11 @@ async def router_node(state: GraphState) -> Dict[str, Any]:
         is_greeting = intent_match.get('tag') == 'greeting'
         has_history = len(history) > 0 or len(tool_history) > 0
         
+        logging.info(f"🎯 Intent detected: {intent_match.get('tag')} | has_history: {has_history} | history_count: {len(history)} | tool_history_count: {len(tool_history)}")
+        
         if is_greeting and has_history:
             # User said "hi" mid-conversation - treat as casual interjection, not new greeting
-            logging.info(f"🎯 Router: Greeting detected but conversation active - using normal routing")
+            logging.info(f"🎯 Router: Greeting detected but conversation active (history: {len(history)}, tools: {len(tool_history)}) - using normal routing")
             # Continue to normal routing below
         else:
             # Use intent response (for new greetings, thanks, goodbye, etc.)
