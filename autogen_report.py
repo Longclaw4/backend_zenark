@@ -181,13 +181,10 @@ Output MUST be ONLY this concise structure, filling in the content. Do not add a
 
 3. GENTLE STEP: [1 compassionate, actionable follow-up sentence for the next day.]
 
-4. DAILY TIMETABLE: [Create ONE personalized daily timetable with specific times (e.g., 6:00 AM - Wake up, 7:00 AM - Breakfast, etc.) that the user can follow every day, incorporating wellness activities]
-
 CRITICAL RULES:
 - Be culturally appropriate for Indian students
 - Make tasks realistic and achievable
 - Focus on gradual improvement
-- Include specific times/durations in the daily timetable
 - Use ONLY the structure above, no extra text"""
 
         # Run all 3 agents in parallel using asyncio
