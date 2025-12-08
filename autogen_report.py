@@ -162,29 +162,29 @@ CRITICAL:
 - DOUBLE-CHECK: No hallucinated topics!
 - NO MENTIONS of people/relationships not discussed!"""
 
-        planner_prompt = f"""You are a wellness coach creating a simple daily routine.
+        planner_prompt = f"""Role: You are the Personalized Mental Wellness Planner Generator. Your task is to construct a highly actionable, evidence-based, 7-Day Mental Wellness Plan that drives positive behavioral change, based on the user's current status and identified constraints.
 
 Based on this conversation:
 {conversation_text[:2000]}
 
-Create "Top 3 Daily Habits" (MAX 10-15 lines total):
+Create a realistic 7-day plan with:
 
-Format as:
-*Top 3 Daily Habits for This Week:*
+**Day 1-7 Structure:**
+- Morning routine (10-15 min)
+- Study/work focus (with breaks)
+- Social connection activity
+- Evening wind-down
+- ZenMode activity
 
-*1. Morning Anchor (5-10 min)*
-[One specific morning routine - e.g., "7:00 AM: 5-min gratitude journaling + stretching"]
+Make it:
+- Culturally appropriate for Indian students
+- Realistic and achievable
+- Focused on gradual improvement
+- Include specific times/durations
 
-*2. Study/Work Focus*
-[One productivity technique - e.g., "Pomodoro: 25min study, 5min break, repeat 4x"]
+What it generates: 7-day personalized self-care routine with daily activities
 
-*3. Evening Wind-Down (15-20 min)*
-[One evening routine - e.g., "9:00 PM: No screens, 10-min breathing, early sleep"]
-
-*Weekly Bonus:*
-[One social/self-care activity - e.g., "Sunday: 30-min nature walk or call a friend"]
-
-CRITICAL: Keep under 15 lines. Be specific with times and durations. Make it realistic for Indian students."""
+CRITICAL: Be flexible and creative. Don't use the same format every time. Adapt the plan to their specific situation and needs."""
 
         # Run all 3 agents in parallel using asyncio
         import asyncio
