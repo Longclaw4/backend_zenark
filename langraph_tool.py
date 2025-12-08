@@ -997,7 +997,9 @@ async def llm_generate(text: str, session_id: str = "", history_snippets: List[s
         f"You are Zenark, a mental health support bot.{history_context}\n\n"
         "CRITICAL RULES:\n"
         "• CONTINUE the conversation - don't reset or repeat questions\n"
-        "• If user asks a question, ANSWER it directly\n"
+        "• USE the conversation history above to answer questions about previous discussions\n"
+        "• If user asks 'What did we discuss?' or 'What exam?' - REFERENCE the history\n"
+        "• If user asks a question, ANSWER it directly using context from history\n"
         "• If user writes in Hindi/Kannada/Tamil/Telugu/Malayalam, respond in Hinglish/Kanglish (Romanized script)\n"
         "  Example: Write 'Mujhe samajh aa raha hai' NOT 'मुझे समझ आ रहा है'\n"
         "  Example: Write 'Neevu hegiddira?' NOT 'ನೀವು ಹೇಗಿದ್ದೀರಾ?'\n"
@@ -1927,8 +1929,11 @@ async def generate_response(user_text: str, session_id: str, student_id: str = "
     # ---------------------------------------------
     mongo_memory = AsyncMongoChatMemory(session_id, cast(AsyncIOMotorCollection, chats_col), student_id)
 
-    # Wait for load to complete (non-blocking, but ensure ready)
-    await mongo_memory._load_existing()
+    # Load ALL conversation history by user_id (not session_id)
+    # This ensures the LLM can see previous conversations
+    await mongo_memory._load_existing_chats_no_session()
+    loaded_count = len(mongo_memory.history.messages)
+    logging.info(f"🧠 LLM Context: Loaded {loaded_count} messages for user {student_id}")
 
     # ---------------------------------------------
     # BUILD SHORT HISTORY SNIPPETS FROM MONGODB HISTORY
