@@ -1529,18 +1529,28 @@ class Router:
 **Recent Conversation:**
 {recent_history}
 
-**Routing Guidelines:**
-1. **Academic queries** (marks, exams, study tips) → Use marks_tool or exam_tips_tool
-2. **Positive emotions** (joy, happiness, celebration) → Use positive_conversation_handler
-3. **Negative emotions** (sadness, anxiety, stress) → Use negative_conversation_handler
-4. **Substance questions** (smoking, drugs, alcohol) → Use substance_handler
-5. **Moral risks** (violence, illegal intent) → Use moral_risk_handler
-6. **Goodbyes** (bye, exit) → Use end_chat_handler
-7. **Crisis situations** (self-harm, suicide) → Use crisis_handler (CRITICAL)
+**Routing Guidelines (IN PRIORITY ORDER):**
+1. **Crisis situations** (self-harm, suicide) → Use crisis_handler (CRITICAL - ALWAYS FIRST)
+2. **Negative emotions with distress** (sadness, anxiety, stress, crying, parents fighting, broke, overwhelmed) → Use negative_conversation_handler
+   - IMPORTANT: If user mentions exams/studies BUT shows emotional distress (fighting, broke, stressed), use negative_conversation_handler NOT exam_tips_tool
+   - Example: "My exams are coming and my parents are fighting" → negative_conversation_handler (NOT exam_tips_tool)
+3. **Substance questions** (smoking, drugs, alcohol) → Use substance_handler
+4. **Moral risks** (violence, illegal intent) → Use moral_risk_handler
+5. **Positive emotions** (joy, happiness, celebration) → Use positive_conversation_handler
+6. **Pure academic queries WITHOUT emotional distress** (marks, study tips, exam preparation) → Use marks_tool or exam_tips_tool
+   - ONLY use these if user is asking for study help WITHOUT showing distress
+   - Example: "How do I prepare for JEE?" → exam_tips_tool
+   - Example: "My exams are stressing me out" → negative_conversation_handler
+7. **Goodbyes** (bye, exit) → Use end_chat_handler
 8. **General/unclear** → Use llm_generate
 
+**CRITICAL RULE:**
+- Emotional distress ALWAYS takes priority over academic keywords
+- If user mentions "exams" but also shows stress/anxiety/family problems → Use negative_conversation_handler
+- Only use exam_tips_tool when user is calmly asking for study advice
+
 **Context Awareness:**
-- If user discussed marks recently and now asks about study → Use exam_tips_tool
+- If user discussed marks recently and now asks about study (WITHOUT distress) → Use exam_tips_tool
 - If user shows repeated negative emotions → Prioritize negative_conversation_handler
 - If user switches topics → Adapt to new context
 
