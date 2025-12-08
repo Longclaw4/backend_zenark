@@ -2188,6 +2188,12 @@ async def chat_endpoint(chat_request: ChatRequest):
         # INIT MONGODB-BASED MEMORY (Per request) WITH STUDENT_ID
         # ---------------------------------------------
         mongo_memory = AsyncMongoChatMemory(session_id, cast(AsyncIOMotorCollection, chats_col), student_id)
+        
+        # ---------------------------------------------
+        # LOAD EXISTING CONVERSATION HISTORY BY USER_ID (NOT SESSION_ID)
+        # This ensures memory persists across sessions even when frontend generates new session_id
+        # ---------------------------------------------
+        await mongo_memory._load_existing_chats_no_session()
 
         # ---------------------------------------------
         # SAVE USER MESSAGE TO MONGODB
