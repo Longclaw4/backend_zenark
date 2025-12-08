@@ -1670,19 +1670,30 @@ async def router_node(state: GraphState) -> Dict[str, Any]:
     # ============================================================
     detected_lang = MultilingualDetector.detect_language(text)
     if detected_lang:
-        logging.info(f"🌐 Router: Multilingual detected ({detected_lang}) - routing to multilingual_handler")
-        return {
-            "emotion": "neutral",
-            "selected_tool": "multilingual_handler",
-            "tool_input": text,
-            "tool_history": tool_history + ["multilingual_handler"],
-            "debug_info": {
+        # Check if conversation already started (has history)
+        has_history = len(history) > 0 or len(tool_history) > 0
+        
+        if has_history:
+            # User is writing in regional language mid-conversation
+            # Don't route to multilingual_handler (which shows greeting)
+            # Instead, let normal routing handle it with Hinglish/Kanglish instructions
+            logging.info(f"🌐 Router: Multilingual detected ({detected_lang}) but conversation active - using normal routing with Hinglish")
+            # Continue to normal routing below
+        else:
+            # First message in regional language - show greeting
+            logging.info(f"🌐 Router: Multilingual detected ({detected_lang}) - routing to multilingual_handler")
+            return {
                 "emotion": "neutral",
-                "tool": "multilingual_handler",
-                "detected_language": detected_lang,
-                "previous_tool": tool_history[-1] if tool_history else None
+                "selected_tool": "multilingual_handler",
+                "tool_input": text,
+                "tool_history": tool_history + ["multilingual_handler"],
+                "debug_info": {
+                    "emotion": "neutral",
+                    "tool": "multilingual_handler",
+                    "detected_language": detected_lang,
+                    "previous_tool": tool_history[-1] if tool_history else None
+                }
             }
-        }
     
     # ============================================================
     # PRIORITY 1: INTENT CLASSIFICATION PRE-PROCESSING
