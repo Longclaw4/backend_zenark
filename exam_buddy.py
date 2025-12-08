@@ -414,18 +414,10 @@ async def get_exam_buddy_response(
         # Get the session history
         history = get_session_history(session_id)
 
-        # Get the current session to include context
-        from auth import get_session
-        session = get_session(session_id)
-        session_context = session.get('context', '') if session else ''
-
-        # Combine with any additional context
-        full_context = f"{session_context}\n\n{context}".strip()
-
         # Prepare the input
         input_data = {
             "question": question,
-            "context": full_context
+            "context": context
         }
 
         # Get the response
@@ -434,23 +426,11 @@ async def get_exam_buddy_response(
             config={"configurable": {"session_id": session_id}}
         )
 
-        # Update the session with the latest context
-        if session:
-            from db_utils import db_manager
-            db_manager.sessions.update_one(
-                {"session_id": session_id},
-                {"$set": {"last_activity": datetime.utcnow()}}
-            )
-
         return response
 
     except Exception as e:
         logger.error(f"Error in get_exam_buddy_response: {str(e)}")
         return "I'm sorry, I encountered an error while processing your request. Please try again later."
-        return (
-            "I'm having some technical difficulties right now. "
-            "Please try asking your question again in a moment."
-        )
 
 
 def clear_session_history(session_id: str):
