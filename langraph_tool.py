@@ -2034,6 +2034,22 @@ async def save_conversation(
 
 app = FastAPI(title="Zenark Mental Health Bot API", version="1.0.0", lifespan=lifespan)
 
+# Add CORS middleware to allow frontend access
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://zenark-app.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:8501",  # Streamlit
+        "*"  # Allow all origins (remove in production if you want strict control)
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
+
 class ChatRequest(BaseModel):
     message: Optional[str] = None
     session_id: str
