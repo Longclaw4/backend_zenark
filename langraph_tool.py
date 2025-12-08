@@ -1162,10 +1162,11 @@ class MultilingualDetector:
             if score > 0:
                 language_scores[lang] = score
         
-        # Return language with highest score (minimum threshold: 2)
+        # Return language with highest score (minimum threshold: 6 to avoid false positives)
+        # This requires at least 3 romanized words or 1 phrase + 1 word
         if language_scores:
             best_lang = max(language_scores.items(), key=lambda x: x[1])[0]
-            if language_scores[best_lang] >= 2:
+            if language_scores[best_lang] >= 6:
                 logging.info(f"🌐 Romanized language detected: {best_lang} (score: {language_scores[best_lang]})")
                 return best_lang
         
