@@ -1,13 +1,21 @@
-# Placeholder for api_key_rotator module
-# Replace this with your actual implementation
-
+"""
+API Key Rotator for OpenAI
+Handles API key management and rotation.
+"""
 import os
+from dotenv import load_dotenv
 
-def get_api_key() -> str:
+# Load environment variables
+load_dotenv()
+
+def get_api_key():
     """
-    Get OpenAI API key (with rotation logic if needed).
+    Get the OpenAI API key from environment variables.
     
     Returns:
-        str: OpenAI API key
+        str: The OpenAI API key
     """
-    return os.getenv('OPENAI_API_KEY', '')
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not found in environment variables")
+    return api_key
