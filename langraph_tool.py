@@ -1146,7 +1146,6 @@ class MultilingualDetector:
             f"your feelings and thoughts are just as valid in any language. "
             f"If you're comfortable, please share what's on your mind in English, and I'll be here to listen and support you.\n\n"
             f"Is there something specific you'd like to talk about today?"
-            "• If the user writes in their regional indian language like kannada, Telugu, Tamil, Hindi, or Malayalam, respond in the SAME language\n"
         )
         return response
 
