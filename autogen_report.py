@@ -182,7 +182,12 @@ Make it:
 - Focused on gradual improvement
 - Include specific times/durations
 
-What it generates: 7-day personalized self-care routine with daily activities
+**ALSO INCLUDE: A Personalized Daily Timetable**
+After the 7-day plan, create ONE single daily timetable that the user can follow every day. This should be a consistent routine with specific times (e.g., 6:00 AM - Wake up, 7:00 AM - Breakfast, etc.) that incorporates their wellness activities.
+
+What it generates: 
+1. 7-day personalized self-care routine with daily activities
+2. One consistent daily timetable to follow every day
 
 CRITICAL: Be flexible and creative. Don't use the same format every time. Adapt the plan to their specific situation and needs."""
 
