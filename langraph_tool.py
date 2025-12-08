@@ -231,29 +231,59 @@ class AsyncMongoChatMemory:
 
     async def _load_existing_chats_no_session(self) -> None:
         """
-        Load existing chat history and tool history from MongoDB asynchronously.
+        Load ALL chat history for this user from ALL sessions, ignoring session_id.
+        This ensures memory persists across different session_ids.
         """
         try:
             # Build query with ObjectId conversion for userId
             query = {}
             if self.student_id:
                 try:
-                    query["userId"] = ObjectId(self.student_id)
+                    # Try both ObjectId and string formats
+                    query = {
+                        "$or": [
+                            {"userId": ObjectId(self.student_id)},
+                            {"userId": self.student_id}
+                        ]
+                    }
                 except Exception:
-                    # Fallback to string if conversion fails
-                    query["userId"] = self.student_id
-            doc: Optional[Dict[str, Any]] = await self.chats_col.find_one(query,sort=[("timestamp", -1)])
-            if doc:
+                    # Fallback to string only if ObjectId conversion fails
+                    query = {"userId": self.student_id}
+            
+            # Find ALL documents for this user, sorted by timestamp
+            # Use find() instead of find_one() to get all sessions
+            cursor = self.chats_col.find(query).sort("timestamp", 1)  # Ascending order (oldest first)
+            
+            # Collect all messages from all sessions
+            all_messages = []
+            async for doc in cursor:
                 if "messages" in doc:
                     for msg in doc["messages"]:
-                        if msg.get("role") == "user":
-                            self.history.add_user_message(msg["content"])
-                        elif msg.get("role") == "assistant":
-                            self.history.add_ai_message(msg["content"])
-                if "tool_history" in doc:
-                    self.tool_history = doc["tool_history"]
+                        # Add timestamp to each message for sorting
+                        msg_with_time = {
+                            "role": msg.get("role"),
+                            "content": msg.get("content"),
+                            "timestamp": msg.get("timestamp", datetime.datetime.min)
+                        }
+                        all_messages.append(msg_with_time)
+            
+            # Sort all messages by timestamp to maintain chronological order
+            all_messages.sort(key=lambda x: x["timestamp"])
+            
+            # Load the last 50 messages (to avoid memory overflow)
+            recent_messages = all_messages[-50:] if len(all_messages) > 50 else all_messages
+            
+            # Add to history
+            for msg in recent_messages:
+                if msg.get("role") == "user":
+                    self.history.add_user_message(msg["content"])
+                elif msg.get("role") == "assistant":
+                    self.history.add_ai_message(msg["content"])
+            
+            logging.info(f"✅ Loaded {len(recent_messages)} messages for user {self.student_id} from all sessions")
+            
         except Exception as e:
-            logging.warning(f"Failed to load chat history for session {self.session_id}: {e}")
+            logging.warning(f"Failed to load chat history for user {self.student_id}: {e}")
 
     async def append_user(self, text: str) -> None:
         """
