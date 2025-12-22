@@ -55,6 +55,8 @@ from Guideliness import action_scoring_guidelines
 from autogen_report import generate_autogen_report
 from api_key_rotator import get_api_key
 from exam_buddy import get_exam_buddy_response
+# Journaling Module
+from journaling import router as journaling_router, init_journaling_db
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -165,6 +167,9 @@ async def init_db() -> None:
         await router_memory_col.create_index([("session_id", 1), ("student_id", 1)], unique=True)
         await reports_col.create_index([("userId", 1)])
         await reports_col.create_index([("timestamp", 1)])
+
+        # Initialize journaling database
+        await init_journaling_db(client, DB_NAME)
 
         logging.info("✅ Async MongoDB (Motor) connection established with indexes.")
     except Exception as e:
@@ -2140,6 +2145,10 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
     allow_headers=["*"],  # Allow all headers
 )
+
+# Include journaling routes
+app.include_router(journaling_router)
+
 
 class ChatRequest(BaseModel):
     message: Optional[str] = None
