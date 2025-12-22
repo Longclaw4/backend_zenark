@@ -376,7 +376,7 @@ async def update_user_streak(user_id: str, time_spent: int) -> bool:
         await streaks_col.insert_one({
             "user_id": user_id,
             "current_streak": 1,
-            "last_entry_date": today,
+            "last_entry_date": datetime.combine(today, datetime.min.time()),  # Convert to datetime
             "longest_streak": 1,
             "total_days": 1,
             "created_at": datetime.utcnow(),
@@ -386,6 +386,10 @@ async def update_user_streak(user_id: str, time_spent: int) -> bool:
         return True
     
     last_date = streak_data.get("last_entry_date")
+    
+    # Convert datetime to date if needed
+    if isinstance(last_date, datetime):
+        last_date = last_date.date()
     
     # Check if already journaled today
     if last_date == today:
@@ -411,7 +415,7 @@ async def update_user_streak(user_id: str, time_spent: int) -> bool:
         {
             "$set": {
                 "current_streak": new_streak,
-                "last_entry_date": today,
+                "last_entry_date": datetime.combine(today, datetime.min.time()),  # Convert to datetime
                 "longest_streak": longest,
                 "total_days": streak_data.get("total_days", 0) + 1,
                 "updated_at": datetime.utcnow()
@@ -433,6 +437,11 @@ async def get_user_current_streak(user_id: str) -> int:
     
     # Check if streak is still valid (last entry was yesterday or today)
     last_date = streak_data.get("last_entry_date")
+    
+    # Convert datetime to date if needed
+    if isinstance(last_date, datetime):
+        last_date = last_date.date()
+    
     today = datetime.utcnow().date()
     yesterday = today - timedelta(days=1)
     
