@@ -1005,9 +1005,7 @@ async def llm_generate(text: str, session_id: str = "", history_snippets: List[s
         "• USE the conversation history above to answer questions about previous discussions\n"
         "• If user asks 'What did we discuss?' or 'What exam?' - REFERENCE the history\n"
         "• If user asks a question, ANSWER it directly using context from history\n"
-        "• If user writes in Hindi/Kannada/Tamil/Telugu/Malayalam, respond in Hinglish/Kanglish (Romanized script)\n"
-        "  Example: Write 'Mujhe samajh aa raha hai' NOT 'मुझे समझ आ रहा है'\n"
-        "  Example: Write 'Neevu hegiddira?' NOT 'ನೀವು ಹೇಗಿದ್ದೀರಾ?'\n"
+        "• Respond ONLY in English.\n"
         "• Keep it to 2-3 sentences\n"
         "• Validate emotions without therapy tone\n"
         "• End with ONE gentle question (or none if user asked a question)\n"
@@ -2133,18 +2131,18 @@ app = FastAPI(title="Zenark Mental Health Bot API", version="1.0.0", lifespan=li
 # Add CORS middleware to allow frontend access
 from fastapi.middleware.cors import CORSMiddleware
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://zenark-app.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:8501",  # Streamlit
-        "*"  # Allow all origins (remove in production if you want strict control)
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
-    allow_headers=["*"],  # Allow all headers
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "https://zenark-app.vercel.app",
+#         "http://localhost:3000",
+#         "http://localhost:8501",  # Streamlit
+#         "*"  # Allow all origins (remove in production if you want strict control)
+#     ],
+#     allow_credentials=True,
+#     allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+#     allow_headers=["*"],  # Allow all headers
+# )
 
 # Include journaling routes
 app.include_router(journaling_router)
@@ -2200,11 +2198,17 @@ def sanitize_dict(obj: Any) -> Dict[str, Any]:
 # ============================================================
 def decode_jwt(token):
     """Decode JWT token to extract payload."""
-    header, payload, signature = token.split('.')
-    padded_payload = payload + '=' * (-len(payload) % 4)
-    decoded_bytes = base64.urlsafe_b64decode(padded_payload)
-    payload_data = json.loads(decoded_bytes)
-    return payload_data
+    try:
+        if not token or token.count('.') != 2:
+            return {}
+        header, payload, signature = token.split('.')
+        padded_payload = payload + '=' * (-len(payload) % 4)
+        decoded_bytes = base64.urlsafe_b64decode(padded_payload)
+        payload_data = json.loads(decoded_bytes)
+        return payload_data
+    except Exception as e:
+        print(f"Error decoding JWT: {e}")
+        return {}
 
 def sanitize(obj: Any) -> Any:
     """Recursively convert ObjectId -> str and sanitize nested containers."""
