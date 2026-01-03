@@ -61,11 +61,11 @@ async def create_journal_entry(
     result = await entries_col.insert_one(entry)
     entry_id = str(result.inserted_id)
     
-    # Update streak if time spent >= 5 minutes (300 seconds)
+    # Update streak if time spent >= 2 minutes (120 seconds)
     streak_updated = False
     current_streak = 0
     
-    if time_spent >= 300:
+    if time_spent >= 120:
         streak_updated = await update_user_streak(user_id, time_spent)
         current_streak = await get_user_current_streak(user_id)
     
@@ -362,7 +362,7 @@ async def update_user_streak(user_id: str, time_spent: int) -> bool:
     Returns:
         True if streak was updated, False if already counted today
     """
-    if time_spent < 300:  # Less than 5 minutes
+    if time_spent < 120:  # Less than 2 minutes
         return False
     
     streaks_col = get_journal_streaks_collection()
