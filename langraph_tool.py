@@ -2713,6 +2713,126 @@ async def analytics_dashboard():
         return JSONResponse(content={"status": "error", "error": str(e)}, status_code=500)
 
 
+@app.get("/report/monthly-mindfulness")
+async def get_monthly_mindfulness_report(user_id: str, year: int, month: int):
+    """
+    Get monthly mindfulness calendar for Report Card page
+    
+    Shows which days user used:
+    - Zen Mode (journaling) only → light_purple
+    - Zen Chat only → other color
+    - Both → dark_purple
+    """
+    try:
+        from datetime import datetime
+        from journaling.database import get_journal_entries_collection
+        from bson import ObjectId
+        
+        # Validate inputs
+        if not user_id:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "user_id is required"}
+            )
+        if not (1 <= month <= 12):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Month must be between 1 and 12"}
+            )
+        
+        # Get month boundaries
+        month_start = datetime(year, month, 1)
+        if month == 12:
+            month_end = datetime(year + 1, 1, 1)
+        else:
+            month_end = datetime(year, month + 1, 1)
+        
+        # Get Zen Mode data (journaling)
+        entries_col = get_journal_entries_collection()
+        journal_entries = await entries_col.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": month_start, "$lt": month_end}
+        }).to_list(length=None)
+        
+        zen_mode_dates = set()
+        for entry in journal_entries:
+            date_str = entry["timestamp"].strftime("%Y-%m-%d")
+            zen_mode_dates.add(date_str)
+        
+        # Get Zen Chat data
+        try:
+            user_id_obj = ObjectId(user_id)
+            query = {
+                "$or": [
+                    {"userId": user_id_obj},
+                    {"userId": user_id}
+                ],
+                "timestamp": {"$gte": month_start, "$lt": month_end}
+            }
+        except:
+            query = {
+                "userId": user_id,
+                "timestamp": {"$gte": month_start, "$lt": month_end}
+            }
+        
+        chat_sessions = await chats_col.find(query).to_list(length=None)
+        
+        zen_chat_dates = set()
+        for session in chat_sessions:
+            if "timestamp" in session:
+                date_str = session["timestamp"].strftime("%Y-%m-%d")
+                zen_chat_dates.add(date_str)
+        
+        # Build calendar data
+        calendar_data = []
+        all_dates = zen_mode_dates.union(zen_chat_dates)
+        
+        for date_str in sorted(all_dates):
+            has_zen_mode = date_str in zen_mode_dates
+            has_zen_chat = date_str in zen_chat_dates
+            
+            if has_zen_mode and has_zen_chat:
+                activity_type = "both"
+                color = "dark_purple"
+            elif has_zen_mode:
+                activity_type = "zen_mode"
+                color = "light_purple"
+            else:
+                activity_type = "zen_chat"
+                color = "other"
+            
+            day = int(date_str.split("-")[2])
+            
+            calendar_data.append({
+                "date": date_str,
+                "day": day,
+                "activity_type": activity_type,
+                "color": color,
+                "has_zen_mode": has_zen_mode,
+                "has_zen_chat": has_zen_chat
+            })
+        
+        return JSONResponse({
+            "success": True,
+            "year": year,
+            "month": month,
+            "calendar_data": calendar_data,
+            "summary": {
+                "total_active_days": len(all_dates),
+                "zen_mode_only_days": len(zen_mode_dates - zen_chat_dates),
+                "zen_chat_only_days": len(zen_chat_dates - zen_mode_dates),
+                "both_days": len(zen_mode_dates.intersection(zen_chat_dates))
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting monthly mindfulness: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
 # ===================================================
 # RUN SERVER
 # ===================================================

@@ -411,3 +411,137 @@ async def get_stats(user_id: str):
     except Exception as e:
         logger.error(f"Error getting stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/monthly-mindfulness")
+async def get_monthly_mindfulness(user_id: str, year: int, month: int):
+    """
+    Get monthly mindfulness calendar data showing activity types
+    
+    Color coding:
+    - light_purple: Only Zen Mode (journaling) used
+    - dark_purple: Both Zen Mode + Zen Chat used  
+    - other: Only Zen Chat used
+    
+    Query Params:
+    - user_id: User identifier
+    - year: Year (e.g., 2025)
+    - month: Month (1-12)
+    """
+    try:
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        if not (1 <= month <= 12):
+            raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+        if year < 2000 or year > 2100:
+            raise HTTPException(status_code=400, detail="Invalid year")
+        
+        from .database import get_journal_entries_collection
+        from bson import ObjectId
+        
+        # Get journaling data (Zen Mode)
+        entries_col = get_journal_entries_collection()
+        
+        # Get start and end of month
+        month_start = datetime(year, month, 1)
+        if month == 12:
+            month_end = datetime(year + 1, 1, 1)
+        else:
+            month_end = datetime(year, month + 1, 1)
+        
+        # Get all journal entries for the month
+        journal_entries = await entries_col.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": month_start, "$lt": month_end}
+        }).to_list(length=None)
+        
+        # Get dates with journal entries (Zen Mode)
+        zen_mode_dates = set()
+        for entry in journal_entries:
+            date_str = entry["timestamp"].strftime("%Y-%m-%d")
+            zen_mode_dates.add(date_str)
+        
+        # Get chat data (Zen Chat) from main database
+        # Import from main app
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        from langraph_tool import chats_col
+        
+        # Try to convert user_id to ObjectId
+        try:
+            user_id_obj = ObjectId(user_id)
+            query = {
+                "$or": [
+                    {"userId": user_id_obj},
+                    {"userId": user_id}
+                ],
+                "timestamp": {"$gte": month_start, "$lt": month_end}
+            }
+        except:
+            query = {
+                "userId": user_id,
+                "timestamp": {"$gte": month_start, "$lt": month_end}
+            }
+        
+        chat_sessions = await chats_col.find(query).to_list(length=None)
+        
+        # Get dates with chat sessions (Zen Chat)
+        zen_chat_dates = set()
+        for session in chat_sessions:
+            if "timestamp" in session:
+                date_str = session["timestamp"].strftime("%Y-%m-%d")
+                zen_chat_dates.add(date_str)
+        
+        # Build calendar data with color coding
+        calendar_data = []
+        
+        # All dates with activity
+        all_dates = zen_mode_dates.union(zen_chat_dates)
+        
+        for date_str in sorted(all_dates):
+            has_zen_mode = date_str in zen_mode_dates
+            has_zen_chat = date_str in zen_chat_dates
+            
+            # Determine activity type and color
+            if has_zen_mode and has_zen_chat:
+                activity_type = "both"
+                color = "dark_purple"  # Both Zen Mode + Zen Chat
+            elif has_zen_mode:
+                activity_type = "zen_mode"
+                color = "light_purple"  # Only Zen Mode
+            else:
+                activity_type = "zen_chat"
+                color = "other"  # Only Zen Chat
+            
+            # Extract day number
+            day = int(date_str.split("-")[2])
+            
+            calendar_data.append({
+                "date": date_str,
+                "day": day,
+                "activity_type": activity_type,
+                "color": color,
+                "has_zen_mode": has_zen_mode,
+                "has_zen_chat": has_zen_chat
+            })
+        
+        return JSONResponse({
+            "success": True,
+            "year": year,
+            "month": month,
+            "calendar_data": calendar_data,
+            "summary": {
+                "total_active_days": len(all_dates),
+                "zen_mode_only_days": len(zen_mode_dates - zen_chat_dates),
+                "zen_chat_only_days": len(zen_chat_dates - zen_mode_dates),
+                "both_days": len(zen_mode_dates.intersection(zen_chat_dates))
+            }
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting monthly mindfulness: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
