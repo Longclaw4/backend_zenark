@@ -2837,6 +2837,87 @@ async def get_monthly_mindfulness_report(user_id: str, year: int, month: int):
         )
 
 
+@app.get("/report/zen-mode-time")
+async def get_zen_mode_total_time(user_id: str, period: str = "week"):
+    """
+    Get total focus time spent in Zen Mode
+    
+    Zen Mode includes:
+    - Journaling
+    - Other activities (to be added)
+    
+    Args:
+        user_id: User identifier
+        period: "week", "month", or "all"
+    """
+    try:
+        from datetime import datetime, timedelta
+        from journaling.database import get_journal_entries_collection
+        
+        if not user_id:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "user_id is required"}
+            )
+        
+        # Calculate time range
+        now = datetime.utcnow()
+        if period == "week":
+            start_date = now - timedelta(days=7)
+        elif period == "month":
+            start_date = now - timedelta(days=30)
+        else:
+            start_date = datetime(2000, 1, 1)  # All time
+        
+        # Get journaling time
+        entries_col = get_journal_entries_collection()
+        journal_entries = await entries_col.find({
+            "user_id": user_id,
+            "timestamp": {"$gte": start_date}
+        }).to_list(length=None)
+        
+        total_journal_time = sum(entry.get("time_spent", 0) for entry in journal_entries)
+        
+        # TODO: Add other Zen Mode activities here
+        # total_meditation_time = ...
+        # total_breathing_time = ...
+        
+        total_zen_time = total_journal_time  # Will add more later
+        
+        # Convert to hours and minutes
+        hours = total_zen_time // 3600
+        minutes = (total_zen_time % 3600) // 60
+        
+        # Calculate weekly goal progress (assume 10 hours = 36000 seconds)
+        weekly_goal = 36000  # 10 hours in seconds
+        progress_percentage = min(100, int((total_zen_time / weekly_goal) * 100))
+        
+        return JSONResponse({
+            "success": True,
+            "total_time_seconds": total_zen_time,
+            "total_time_formatted": f"{hours}h {minutes}m",
+            "hours": hours,
+            "minutes": minutes,
+            "period": period,
+            "breakdown": {
+                "journaling": total_journal_time,
+                # Add more activities here later
+            },
+            "weekly_goal": {
+                "target_seconds": weekly_goal,
+                "achieved_seconds": total_zen_time,
+                "progress_percentage": progress_percentage
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting zen mode time: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
 # ===================================================
 # RUN SERVER
 # ===================================================
