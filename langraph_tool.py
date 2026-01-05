@@ -175,7 +175,7 @@ async def init_db() -> None:
         await init_journaling_db(client, DB_NAME)
         
         # Initialize meditation database
-        await init_meditation_db(client)
+        await init_meditation_db(client, DB_NAME)
 
         logging.info("✅ Async MongoDB (Motor) connection established with indexes.")
     except Exception as e:

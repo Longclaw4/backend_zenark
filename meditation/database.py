@@ -14,17 +14,19 @@ _meditation_progress_col: Optional[AsyncIOMotorCollection] = None
 _meditation_streaks_col: Optional[AsyncIOMotorCollection] = None
 
 
-async def init_meditation_db(mongo_client: AsyncIOMotorClient):
+async def init_meditation_db(mongo_client: AsyncIOMotorClient, db_name: str = None):
     """
     Initialize meditation database collections
     
     Args:
         mongo_client: MongoDB client instance
+        db_name: Database name (optional)
     """
     global _meditation_progress_col, _meditation_streaks_col
     
     try:
-        db_name = os.getenv("MONGO_DB_OFFICIAL", "zenark_official")
+        if db_name is None:
+            db_name = os.getenv("MONGO_DB_NAME_OFFICIAL", "zenark_official")
         db = mongo_client[db_name]
         
         # Meditation progress collection
