@@ -57,6 +57,9 @@ from api_key_rotator import get_api_key
 from exam_buddy import get_exam_buddy_response
 # Journaling Module
 from journaling import router as journaling_router, init_journaling_db
+# Meditation Module
+from meditation import meditation_router
+from meditation.database import init_meditation_db
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -170,6 +173,9 @@ async def init_db() -> None:
 
         # Initialize journaling database
         await init_journaling_db(client, DB_NAME)
+        
+        # Initialize meditation database
+        await init_meditation_db(client)
 
         logging.info("✅ Async MongoDB (Motor) connection established with indexes.")
     except Exception as e:
@@ -2146,6 +2152,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Include journaling routes
 app.include_router(journaling_router)
+
+# Include meditation routes
+app.include_router(meditation_router)
 
 
 class ChatRequest(BaseModel):
