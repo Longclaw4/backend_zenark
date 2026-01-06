@@ -31,8 +31,8 @@ async def get_sessions(tab: Optional[int] = None):
     """
     try:
         if tab:
-            if tab not in [1, 2]:
-                raise HTTPException(status_code=400, detail="Tab must be 1 or 2")
+            if tab not in range(1, 12):  # Tabs 1-11
+                raise HTTPException(status_code=400, detail="Tab must be between 1 and 11")
             sessions = get_sessions_by_tab(tab)
         else:
             sessions = get_all_sessions()
