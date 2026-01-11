@@ -60,6 +60,7 @@ from journaling import router as journaling_router, init_journaling_db
 # Meditation Module
 from meditation import meditation_router
 from meditation.database import init_meditation_db
+from auth_middleware import JWTAuthenticationMiddleware
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -2133,6 +2134,9 @@ async def save_conversation(
 # ===================================================
 
 app = FastAPI(title="Zenark Mental Health Bot API", version="1.0.0", lifespan=lifespan)
+
+# Add JWT Validation Middleware
+app.add_middleware(JWTAuthenticationMiddleware)
 
 # Add CORS middleware to allow frontend access
 from fastapi.middleware.cors import CORSMiddleware
