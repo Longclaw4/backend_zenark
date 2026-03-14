@@ -1,6 +1,6 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from auth_routes import decode_jwt_token
+from jwt_utils import decode_jwt_token
 import logging
 
 logger = logging.getLogger("zenark.middleware")
